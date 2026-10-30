@@ -168,8 +168,7 @@ export function deleteItem(viewerId: string, id: string): Item {
 
 /**
  * Completes an item. Recurring items roll forward to their next occurrence
- * (keeping a history entry in data.history) instead of closing. Paying a bill
- * only *records* the payment — it never moves money.
+ * (keeping a history entry in data.history) instead of closing.
  */
 export function completeItem(viewerId: string, id: string): { item: Item; rolledTo: number | null } {
   const item = requireEditable(viewerId, id);
@@ -181,13 +180,6 @@ export function completeItem(viewerId: string, id: string): { item: Item; rolled
   const entry = { at: now, by: viewerId, due: item.due_at, amount_cents: item.amount_cents };
 
   return db().transaction(() => {
-    if (item.kind === "bill") {
-      // Record the payment as an expense so analytics reflect reality.
-      createItem(viewerId, "expense", {
-        title: item.title, due_at: Date.UTC(new Date(now).getUTCFullYear(), new Date(now).getUTCMonth(), new Date(now).getUTCDate()),
-        amount_cents: item.amount_cents, data: { category: item.data.category ?? "Other", notes: "Recorded from bill", bill_id: item.id },
-      }, { visibility: item.visibility });
-    }
     if (rec !== "none" && item.due_at != null) {
       const next = addRecurrence(item.due_at, rec);
       db().prepare("UPDATE items SET due_at=?, data=?, updated_at=? WHERE id=?")

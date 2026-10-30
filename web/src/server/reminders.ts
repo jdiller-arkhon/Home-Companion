@@ -4,7 +4,7 @@ import { getSettings } from "./settings";
 import { notify } from "./notifications";
 import { snapshot, briefingLines } from "./briefing";
 import { db } from "./db/client";
-import { DAY, formatMoney, todayIn, tzOffset } from "@/lib/time";
+import { DAY, todayIn, tzOffset } from "@/lib/time";
 
 const when = (d: number) => (d < 0 ? `${-d} day${d === -1 ? "" : "s"} overdue` : d === 0 ? "today" : d === 1 ? "tomorrow" : `in ${d} days`);
 
@@ -24,13 +24,6 @@ export async function sweepReminders(now = Date.now()) {
   for (const u of listUsers()) {
     const days = (ms: number) => Math.round((ms - today) / DAY);
 
-    for (const b of listItems(u.id, { kind: "bill", status: "open", dueBefore: today + 4 * DAY })) {
-      if (b.data.autopay) continue;
-      await send({ userId: u.id, category: "bills", title: `${b.title} is due ${when(days(b.due_at!))}`, body: formatMoney(b.amount_cents, s.currency), href: "/finance", dedupeKey: `bill:${b.id}:${b.due_at}:${u.id}` });
-    }
-    for (const sub of listItems(u.id, { kind: "subscription", status: "active", dueAfter: today, dueBefore: today + 3 * DAY })) {
-      await send({ userId: u.id, category: "bills", title: `${sub.title} renews ${when(days(sub.due_at!))}`, body: formatMoney(sub.amount_cents, s.currency), href: "/finance?tab=subscriptions", dedupeKey: `sub:${sub.id}:${sub.due_at}:${u.id}` });
-    }
     for (const t of listItems(u.id, { kind: ["task", "chore", "errand"], status: "open", dueBefore: today + DAY })) {
       if (t.data.assignee && t.data.assignee !== u.name) continue;
       await send({ userId: u.id, category: "reminders", title: `${t.title} — ${when(days(t.due_at!))}`, href: "/planner?tab=tasks", dedupeKey: `task:${t.id}:${t.due_at}:${u.id}` });

@@ -19,13 +19,14 @@ describe("tool gate", () => {
     expect(listItems("u1", { kind: "grocery" })).toHaveLength(1);
   });
 
-  it("holds financial records for approval", async () => {
-    const r = await executeTool("add_record", { kind: "bill", fields: { title: "Power", amount: "90", due_at: "2026-11-02" } }, ctx);
-    expect(r.status).toBe("needs_confirmation");
-    expect(listItems("u1", { kind: "bill" })).toHaveLength(0);
+  it("holds deletions for approval with PIN, then runs them", async () => {
+    const add = await executeTool("add_record", { kind: "note", fields: { title: "Old note" } }, ctx);
+    const id = ((add as { result: { created: { id: string } } }).result.created.id);
+    const r = await executeTool("delete_record", { id }, ctx);
+    expect(r).toMatchObject({ status: "needs_confirmation", level: "elevated" });
     const a = pendingActions("u1")[0];
-    expect((await resolveAction("u1", a.id, true, false)).status).toBe("ok");
-    expect(listItems("u1", { kind: "bill" })).toHaveLength(1);
+    expect((await resolveAction("u1", a.id, true, true)).status).toBe("ok");
+    expect(listItems("u1", { kind: "note" })).toHaveLength(0);
   });
 
   it("requires step-up auth for unlocking and never runs it unapproved", async () => {

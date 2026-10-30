@@ -8,7 +8,6 @@ import { completeItem, createItem, deleteItem, getItem, parseInput, setStatus, u
 
 export type ItemFormState = { ok?: boolean; error?: string; fieldErrors?: Record<string, string> };
 
-const FINANCE = ["bill", "subscription", "expense", "budget", "savings_goal", "account"];
 
 function done(kind: string, userId: string) {
   publish(`items:${kind}`, userId);
@@ -39,7 +38,7 @@ export async function completeAction(id: string) {
   const it = getItem(user.id, id);
   if (!it) throw new Error("Not found");
   const r = completeItem(user.id, id);
-  audit({ actorId: user.id, actorKind: "user", action: `${it.kind}:${it.kind === "bill" ? "mark_paid" : "complete"}`, target: it.title, outcome: "ok", detail: { rolledTo: r.rolledTo } });
+  audit({ actorId: user.id, actorKind: "user", action: `${it.kind}:complete`, target: it.title, outcome: "ok", detail: { rolledTo: r.rolledTo } });
   done(it.kind, user.id);
 }
 
@@ -54,8 +53,8 @@ export async function deleteAction(id: string): Promise<{ error?: string; needsE
   const user = await requireUser();
   const it = getItem(user.id, id);
   if (!it) return { error: "Not found" };
-  // Deleting financial history is a sensitive action.
-  if (FINANCE.includes(it.kind) && !(await isElevated())) return { needsElevation: true };
+  // Deleting history records is a sensitive action.
+  if (it.kind === "repair" && !(await isElevated())) return { needsElevation: true };
   deleteItem(user.id, id);
   audit({ actorId: user.id, actorKind: "user", action: `${it.kind}:delete`, target: it.title, outcome: "ok" });
   done(it.kind, user.id);

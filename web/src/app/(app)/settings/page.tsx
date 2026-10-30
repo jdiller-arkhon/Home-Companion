@@ -36,14 +36,13 @@ export default async function Settings() {
             { name: "theme", label: "Appearance", value: p.theme ?? "system", options: [["system", "Match device"], ["light", "Light"], ["dark", "Dark"]] },
             { name: "reduceMotion", label: "Reduce motion", type: "checkbox", value: p.reduceMotion },
             { name: "proactive", label: "Let the assistant suggest things proactively", type: "checkbox", value: p.proactive ?? true },
-            { name: "n_bills", label: "Notify me about upcoming bills", type: "checkbox", value: p.notify?.bills ?? true },
             { name: "n_packages", label: "Notify me about deliveries", type: "checkbox", value: p.notify?.packages ?? true },
             { name: "n_maintenance", label: "Notify me about maintenance & warranties", type: "checkbox", value: p.notify?.maintenance ?? true },
             { name: "n_reminders", label: "Notify me about tasks, chores & occasions", type: "checkbox", value: p.notify?.reminders ?? true },
             { name: "n_security", label: "Notify me about doors, locks & device problems", type: "checkbox", value: p.notify?.security ?? true },
           ]} />
         </Section>
-        <Section title="Notifications" desc="Reminders for bills, deliveries, upkeep, occasions and home security, plus your morning briefing. Choose categories under Your profile.">
+        <Section title="Notifications" desc="Reminders for deliveries, upkeep, tasks, occasions and home security, plus your morning briefing. Choose categories under Your profile.">
           <PushToggle devices={subscriptionCount(user.id)} />
         </Section>
         <Section title="Password & PIN" desc="Your PIN confirms sensitive actions (unlocking doors, deleting records) and switches profiles quickly on the iPad.">

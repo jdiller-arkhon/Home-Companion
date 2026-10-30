@@ -15,17 +15,16 @@ beforeEach(() => {
 const NOW = Date.UTC(2026, 10, 2, 15); // 3 PM, outside briefing hours
 
 describe("reminder sweep", () => {
-  it("notifies once per bill cycle and respects privacy", async () => {
-    createItem("a", "bill", parseInput("bill", { title: "Power", amount: "80", due_at: "2026-11-04" }, "UTC"));
+  it("notifies once per maintenance cycle and respects privacy", async () => {
+    createItem("a", "maintenance", parseInput("maintenance", { title: "Furnace filter", due_at: "2026-11-04", recurrence: "quarterly" }, "UTC"));
     createItem("a", "task", parseInput("task", { title: "Secret gift", due_at: "2026-11-02" }, "UTC"), { visibility: "private" });
-    expect(await sweepReminders(NOW)).toBe(3); // bill ×2 people + private task ×1
+    expect(await sweepReminders(NOW)).toBe(3); // maintenance ×2 people + private task ×1
     expect(await sweepReminders(NOW)).toBe(0); // idempotent
-    expect(inbox("b").map((n) => n.title)).toEqual(["Power is due in 2 days"]);
+    expect(inbox("b").map((n) => n.title)).toEqual(["Furnace filter is due in 2 days"]);
     expect(inbox("a").some((n) => n.title.startsWith("Secret gift"))).toBe(true);
   });
 
-  it("skips autopay bills and tracks read state per person", async () => {
-    createItem("a", "bill", parseInput("bill", { title: "Water", amount: "30", due_at: "2026-11-03", autopay: "on" }, "UTC"));
+  it("tracks read state per person", async () => {
     createItem("a", "package", parseInput("package", { title: "Lamp", due_at: "2026-11-02" }, "UTC"));
     await sweepReminders(NOW);
     expect(inbox("a").map((n) => n.title)).toEqual(["Lamp arrives today"]);

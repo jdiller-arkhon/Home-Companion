@@ -12,12 +12,12 @@ export type UserPrefs = {
   reduceMotion?: boolean;
   textScale?: number;
   widgets?: string[];
-  notify?: { bills?: boolean; packages?: boolean; maintenance?: boolean; reminders?: boolean; security?: boolean };
+  notify?: { packages?: boolean; maintenance?: boolean; reminders?: boolean; security?: boolean };
   briefingEvening?: boolean;
   proactive?: boolean;
 };
 
-export const DEFAULT_WIDGETS = ["briefing", "weather", "agenda", "bills", "home", "packages", "tasks", "activity"];
+export const DEFAULT_WIDGETS = ["briefing", "weather", "agenda", "upkeep", "home", "packages", "tasks", "activity"];
 
 type Row = Omit<User, "prefs" | "has_pin"> & { prefs: string; password_hash: string; pin_hash: string | null };
 
@@ -50,7 +50,7 @@ export async function createUser(input: { name: string; email: string; password:
   db()
     .prepare("INSERT INTO users (id,name,email,password_hash,pin_hash,role,color,prefs,created_at) VALUES (?,?,?,?,?,?,?,?,?)")
     .run(id, input.name.trim(), input.email.trim(), passwordHash, pinHash, input.role, input.color ?? "periwinkle",
-      JSON.stringify({ widgets: DEFAULT_WIDGETS, notify: { bills: true, packages: true, maintenance: true, reminders: true, security: true } }),
+      JSON.stringify({ widgets: DEFAULT_WIDGETS, notify: { packages: true, maintenance: true, reminders: true, security: true } }),
       Date.now());
   return getUser(id)!;
 }

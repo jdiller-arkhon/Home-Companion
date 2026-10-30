@@ -8,7 +8,7 @@ import { publish } from "./events";
  * Notifications are stored (in-app inbox) and fanned out to Web Push for each
  * recipient who enabled that category. dedupe_key makes reminder sweeps idempotent.
  */
-export type Category = "bills" | "packages" | "maintenance" | "reminders" | "security" | "briefing";
+export type Category = "packages" | "maintenance" | "reminders" | "security" | "briefing";
 export type Notification = { id: string; user_id: string | null; kind: string; title: string; body: string; href: string | null; read: boolean; created_at: number };
 
 export async function notify(n: { userId: string | null; category: Category; title: string; body?: string; href?: string; dedupeKey?: string }): Promise<boolean> {

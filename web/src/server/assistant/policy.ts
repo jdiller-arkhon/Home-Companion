@@ -5,7 +5,7 @@
  *  read      – no side effects; runs automatically
  *  low       – reversible household changes; runs automatically
  *  confirm   – a person must tap Approve in the UI
- *  elevated  – Approve + re-enter password/PIN (locks, alarms, garage, deletes, money)
+ *  elevated  – Approve + re-enter password/PIN (locks, alarms, garage, deletes)
  */
 export type Level = "read" | "low" | "confirm" | "elevated";
 export const LEVEL_ORDER: Record<Level, number> = { read: 0, low: 1, confirm: 2, elevated: 3 };
@@ -17,7 +17,7 @@ export function maxLevel(a: Level, b: Level): Level {
 /**
  * Taint escalation: once a turn has ingested untrusted text (document
  * contents, package emails, web data), any side-effecting tool call in that
- * turn is raised to at least `confirm`. A malicious PDF saying "add a bill"
+ * turn is raised to at least `confirm`. A malicious PDF saying "delete the notes"
  * or "unlock the door" therefore can never act silently.
  */
 export function effectiveLevel(base: Level, opts: { tainted: boolean }): Level {

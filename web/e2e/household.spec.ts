@@ -42,30 +42,6 @@ test.describe.serial("household flows", () => {
     await shot(page, "planner");
   });
 
-  test("finance: bills, budgets, mark paid records an expense", async () => {
-    await page.goto("/finance");
-    await page.getByRole("button", { name: "Add", exact: true }).click();
-    await page.locator("[role=dialog] [name=title]").fill("Electric");
-    await page.locator("[role=dialog] button", { hasText: /^Add / }).click();
-    expect(await page.locator("[role=dialog] [name=amount]").evaluate((e) => (e as HTMLInputElement).validity.valueMissing)).toBe(true);
-    await page.locator("[role=dialog] [name=amount]").fill("abc");
-    await page.locator("[role=dialog] [name=due_at]").fill("2026-11-04");
-    await page.locator("[role=dialog] button", { hasText: /^Add / }).click();
-    await expect(page.locator("[role=dialog]")).toContainText("Invalid amount");
-    await page.locator("[role=dialog] [name=amount]").fill("142.18");
-    await page.locator("[role=dialog] [name=due_at]").fill("2026-11-04");
-    await page.locator("[role=dialog] [name=recurrence]").selectOption("monthly");
-    await page.locator("[role=dialog] button", { hasText: /^Add / }).click();
-    await expect(page.getByRole("dialog")).toBeHidden();
-    await addRecord(page, { title: "Internet", amount: "70", due_at: "2026-11-12", recurrence: "monthly" });
-    await page.getByRole("button", { name: "Mark paid: Internet" }).click();
-    await page.goto("/finance?tab=budgets");
-    await addRecord(page, { title: "Utilities", amount: "400" });
-    await page.goto("/finance");
-    await expect(page.getByText("$70.00").first()).toBeVisible();
-    await shot(page, "finance");
-  });
-
   test("upkeep, packages, vault, system, settings, assistant render", async () => {
     await page.goto("/maintenance");
     await addRecord(page, { title: "Replace HVAC filter", due_at: "2026-11-15", recurrence: "quarterly", asset: "Furnace" });
@@ -103,7 +79,7 @@ test.describe.serial("household flows", () => {
     await expect(page.getByText(/isn't reachable right now/)).toBeVisible({ timeout: 15_000 });
   });
 
-  test("month calendar, email paste, bank import, notifications", async () => {
+  test("month calendar, email paste, notifications", async () => {
     await page.goto("/planner?tab=agenda");
     await expect(page.getByRole("link", { name: "Next month" })).toBeVisible();
     await page.getByRole("link", { name: "Next month" }).click();
@@ -119,16 +95,6 @@ test.describe.serial("household flows", () => {
     await expect(page.getByText("Your scale has shipped")).toBeVisible();
     await expect(page.locator('a[href*="ups.com/track"]').first()).toBeVisible();
 
-    await page.goto("/finance?tab=accounts");
-    await page.getByRole("button", { name: "Import statement" }).click();
-    const ofx = "<OFX><FI><ORG>Wescom</ORG></FI><ACCTID>99887766<ACCTTYPE>CHECKING<BANKTRANLIST><STMTTRN><DTPOSTED>20261028<TRNAMT>-23.40<FITID>X1<NAME>TRADER JOES</STMTTRN></BANKTRANLIST><LEDGERBAL><BALAMT>3120.00<DTASOF>20261030</LEDGERBAL></OFX>";
-    await page.setInputFiles("[role=dialog] input[type=file]", { name: "wescom.qfx", mimeType: "application/octet-stream", buffer: Buffer.from(ofx) });
-    await page.locator("[role=dialog] button", { hasText: /^Import$/ }).click();
-    await expect(page.getByRole("status")).toContainText("Imported 1 transaction");
-    await page.keyboard.press("Escape");
-    await expect(page.getByText("$3,120.00").first()).toBeVisible();
-    await shot(page, "accounts");
-
     await page.goto("/settings");
     await expect(page.getByRole("button", { name: "Enable on this device" })).toBeVisible();
     await expect(page.getByRole("button", { name: /Notifications/ }).first()).toBeVisible();
@@ -137,7 +103,7 @@ test.describe.serial("household flows", () => {
   test("iPhone layout", async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, storageState: await page.context().storageState() });
     const p = await ctx.newPage();
-    for (const r of ["", "finance", "planner"]) { await p.goto(`/${r}`); await p.screenshot({ path: `${SHOTS}/iphone-${r || "today"}.png` }); }
+    for (const r of ["", "maintenance", "planner"]) { await p.goto(`/${r}`); await p.screenshot({ path: `${SHOTS}/iphone-${r || "today"}.png` }); }
     await ctx.close();
   });
 

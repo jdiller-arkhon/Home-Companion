@@ -65,7 +65,7 @@ export function RecordForm({ kind, row, people, onSaved, prefill }: { kind: stri
 }
 
 function completeLabel(kind: string) {
-  return kind === "bill" ? "Mark paid" : kind === "package" ? "Delivered" : "Done";
+  return kind === "package" ? "Delivered" : "Done";
 }
 
 export function RecordBoard({ kind, rows, people, emptyText }: { kind: string; rows: RecordRow[]; people: Person[]; emptyText: string }) {
@@ -126,7 +126,7 @@ export function RecordBoard({ kind, rows, people, emptyText }: { kind: string; r
           <Button variant="danger" className="mt-3 w-full" onClick={() => remove(editing.id)}><Trash2 size={14} /> Delete</Button>
         )}
       </Sheet>
-      <ElevateDialog open={!!elevateFor} onOpenChange={(o) => !o && setElevateFor(null)} reason="Deleting financial records needs your PIN or password."
+      <ElevateDialog open={!!elevateFor} onOpenChange={(o) => !o && setElevateFor(null)} reason="Deleting history needs your PIN or password."
         onDone={() => elevateFor && remove(elevateFor)} />
     </div>
   );

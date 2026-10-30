@@ -31,22 +31,21 @@ type ToolDef<A extends z.ZodTypeAny> = {
 function tool<A extends z.ZodTypeAny>(d: ToolDef<A>) { return d; }
 
 const PLANNER_KINDS = ["task", "grocery", "event", "note", "errand", "meal", "chore", "occasion", "recipe", "goal"] as const;
-const FINANCE_KINDS = ["bill", "subscription", "expense", "budget", "savings_goal", "account"] as const;
 const OTHER_KINDS = ["appliance", "maintenance", "vehicle", "repair", "consumable", "package"] as const;
-const ALL_KINDS = [...PLANNER_KINDS, ...FINANCE_KINDS, ...OTHER_KINDS] as const;
+const ALL_KINDS = [...PLANNER_KINDS, ...OTHER_KINDS] as const;
 
 const COMPLETABLE = ["task", "grocery", "chore", "errand", "maintenance", "package", "goal"];
 const SAFE_DOMAINS = ["light", "switch", "fan", "media_player", "scene", "script", "vacuum"];
 
 function itemView(i: ReturnType<typeof listItems>[number]) {
   return { id: i.id, kind: i.kind, title: i.title, status: i.status, due: i.due_at ? new Date(i.due_at).toISOString().slice(0, 16) : null,
-    amount: i.amount_cents != null ? formatMoney(i.amount_cents) : undefined, visibility: i.visibility, ...Object.fromEntries(Object.entries(i.data).filter(([k]) => k !== "history")) };
+    cost: i.amount_cents != null ? formatMoney(i.amount_cents) : undefined, visibility: i.visibility, ...Object.fromEntries(Object.entries(i.data).filter(([k]) => k !== "history")) };
 }
 
 export const TOOLS = [
   tool({
     name: "household_briefing",
-    description: "Get today's grounded household briefing: weather, agenda, bills, tasks, packages, maintenance and home security status.",
+    description: "Get today's grounded household briefing: weather, agenda, tasks, packages, maintenance and home security status.",
     args: z.object({ mode: z.enum(["morning", "evening"]).default("morning") }),
     level: () => "read", summary: () => "Read household briefing",
     run: async (a, ctx) => briefingLines(await snapshot(ctx.userId), a.mode),
@@ -62,9 +61,8 @@ export const TOOLS = [
     name: "add_record",
     description: `Create a household record. 'fields' uses the kind's field names; dates are YYYY-MM-DD, date-times YYYY-MM-DDTHH:MM (household time), money like "42.50". Field names per kind: ${Object.values(KINDS).filter((k) => (ALL_KINDS as readonly string[]).includes(k.kind)).map((k) => `${k.kind}(${k.fields.map((f) => f.name + (f.required ? "*" : "")).join(",")})`).join("; ")}`,
     args: z.object({ kind: z.enum(ALL_KINDS), fields: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])), private: z.boolean().default(false) }),
-    // Financial records always need a person's approval.
-    level: (a) => ((FINANCE_KINDS as readonly string[]).includes(a.kind) ? "confirm" : "low"),
-    summary: (a) => `Add ${kindDef(a.kind).label.toLowerCase()} “${a.fields.title ?? ""}”${a.fields.amount ? ` for ${a.fields.amount}` : ""}`,
+    level: () => "low",
+    summary: (a) => `Add ${kindDef(a.kind).label.toLowerCase()} “${a.fields.title ?? ""}”`,
     run: async (a, ctx) => {
       const item = createItem(ctx.userId, a.kind, parseInput(a.kind, a.fields), { visibility: a.private ? "private" : undefined });
       publish(`items:${a.kind}`, ctx.userId);
@@ -73,7 +71,7 @@ export const TOOLS = [
   }),
   tool({
     name: "complete_record",
-    description: `Mark a record done (recurring ones roll to the next date). Works for: ${COMPLETABLE.join(", ")}. Bills must be marked paid by a person in the Finance screen.`,
+    description: `Mark a record done (recurring ones roll to the next date). Works for: ${COMPLETABLE.join(", ")}.`,
     args: z.object({ id: z.string() }),
     level: () => "low",
     summary: (a) => `Mark record ${a.id} done`,

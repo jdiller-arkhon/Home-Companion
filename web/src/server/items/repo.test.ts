@@ -14,15 +14,15 @@ beforeEach(() => {
 
 describe("parseInput", () => {
   it("validates required fields and money", () => {
-    expect(() => parseInput("bill", { title: "", amount: "x" }, "UTC")).toThrow(ValidationError);
-    const p = parseInput("bill", { title: "Power", amount: "$120.50", due_at: "2026-11-01", recurrence: "monthly" }, "UTC");
+    expect(() => parseInput("repair", { title: "", due_at: "2026-11-01" }, "UTC")).toThrow(ValidationError);
+    expect(() => parseInput("repair", { title: "Faucet", due_at: "2026-11-01", amount: "x" }, "UTC")).toThrow(ValidationError);
+    const p = parseInput("repair", { title: "Faucet", amount: "$120.50", due_at: "2026-11-01" }, "UTC");
     expect(p.amount_cents).toBe(12050);
     expect(p.due_at).toBe(Date.UTC(2026, 10, 1));
-    expect(p.data.recurrence).toBe("monthly");
   });
 
   it("rejects non-http urls (javascript: injection)", () => {
-    expect(() => parseInput("bill", { title: "P", amount: "1", due_at: "2026-11-01", url: "javascript:alert(1)" }, "UTC")).toThrow(/http/);
+    expect(() => parseInput("appliance", { title: "P", manual_url: "javascript:alert(1)" }, "UTC")).toThrow(/http/);
   });
 
   it("rejects select values outside the allowed set", () => {
@@ -41,14 +41,12 @@ describe("visibility boundaries", () => {
 });
 
 describe("completeItem", () => {
-  it("rolls recurring bills forward and records an expense", () => {
-    const bill = createItem(alex, "bill", parseInput("bill", { title: "Rent", amount: "1500", due_at: "2026-01-31", recurrence: "monthly" }, "UTC"));
-    const { item, rolledTo } = completeItem(sam, bill.id);
-    expect(rolledTo).toBe(Date.UTC(2026, 1, 28)); // clamps to end of February
+  it("rolls recurring chores forward, clamping month ends", () => {
+    const chore = createItem(alex, "chore", parseInput("chore", { title: "Deep clean", due_at: "2026-01-31", recurrence: "monthly" }, "UTC"));
+    const { item, rolledTo } = completeItem(sam, chore.id);
+    expect(rolledTo).toBe(Date.UTC(2026, 1, 28)); // Jan 31 → Feb 28
     expect(item.status).toBe("open");
-    const expenses = listItems(alex, { kind: "expense" });
-    expect(expenses).toHaveLength(1);
-    expect(expenses[0].amount_cents).toBe(150000);
+    expect((item.data.history as { by: string }[])[0].by).toBe(sam);
   });
 
   it("closes one-off tasks", () => {

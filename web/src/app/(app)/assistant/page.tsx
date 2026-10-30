@@ -22,7 +22,7 @@ export default async function AssistantPage({ searchParams }: { searchParams: Pr
       <Live />
       <div className="mx-auto w-full max-w-[720px] pt-8 md:pt-12">
         <Assistant key={active?.id ?? "new"} conversationId={active?.id} initial={initial} actions={actions}
-          suggestions={["What's my day look like?", "Add oat milk and eggs to the grocery list", "Which bills are due this week?", "Turn off all the lights", "When does the car registration expire?"]} />
+          suggestions={["What's my day look like?", "Add oat milk and eggs to the grocery list", "What maintenance is coming up?", "Turn off all the lights", "When does the car registration expire?"]} />
       </div>
       <aside className="hidden lg:block sticky top-0 h-dvh overflow-y-auto border-l border-line py-12 pl-6">
         <div className="flex items-center"><h2 className="eyebrow">Conversations</h2><span className="ml-auto"><NewChatLink /></span></div>

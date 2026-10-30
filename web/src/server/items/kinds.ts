@@ -24,7 +24,7 @@ export type KindDef = {
   kind: string;
   label: string;
   plural: string;
-  module: "finance" | "planner" | "maintenance" | "packages";
+  module: "planner" | "maintenance" | "packages";
   defaultVisibility: "shared" | "private";
   fields: Field[];
   /** Status values in lifecycle order; first is the default. */
@@ -40,46 +40,8 @@ const recurrence: Field = { name: "recurrence", label: "Repeats", type: "select"
 const notes: Field = { name: "notes", label: "Notes", type: "textarea" };
 const assignee: Field = { name: "assignee", label: "Assigned to", type: "user" };
 
-export const CATEGORIES = ["Housing", "Utilities", "Groceries", "Dining", "Transport", "Health", "Insurance", "Entertainment", "Shopping", "Travel", "Gifts", "Savings", "Other"] as const;
-const category: Field = { name: "category", label: "Category", type: "select", options: CATEGORIES };
 
 export const KINDS: Record<string, KindDef> = {
-  // ── Finance ───────────────────────────────────────────────────────────
-  bill: {
-    kind: "bill", label: "Bill", plural: "Bills", module: "finance", defaultVisibility: "shared",
-    fields: [title("Payee", "Electric company"), money(), due("Due date", "date", true), recurrence, category,
-      { name: "autopay", label: "Paid automatically by the provider", type: "bool" },
-      { name: "url", label: "Payment portal", type: "url", hint: "Opens in a new tab. Hearth never pays on your behalf." }, notes],
-    statuses: ["open", "paid"], doneStatus: "paid", dueLabel: "Due",
-  },
-  subscription: {
-    kind: "subscription", label: "Subscription", plural: "Subscriptions", module: "finance", defaultVisibility: "shared",
-    fields: [title("Service", "Streaming service"), money("Price"), due("Next renewal", "date", true),
-      { name: "recurrence", label: "Billing cycle", type: "select", options: ["monthly", "quarterly", "yearly", "weekly"] }, category,
-      { name: "url", label: "Manage subscription", type: "url" }, notes],
-    statuses: ["active", "cancelled"], dueLabel: "Renews",
-  },
-  expense: {
-    kind: "expense", label: "Expense", plural: "Expenses", module: "finance", defaultVisibility: "shared",
-    fields: [title("Merchant", "Farmers market"), money(), due("Date", "date", true), category, notes],
-    statuses: ["recorded"],
-  },
-  account: {
-    kind: "account", label: "Account", plural: "Accounts", module: "finance", defaultVisibility: "shared",
-    fields: [title("Account", "Wescom Checking"), money("Balance"), due("Balance as of", "date"), { name: "last4", label: "Last 4 digits", type: "text", hint: "Never enter full account numbers." },
-      { name: "institution", label: "Institution", type: "text", placeholder: "Wescom Credit Union" }],
-    statuses: ["active", "closed"],
-  },
-  budget: {
-    kind: "budget", label: "Budget", plural: "Budgets", module: "finance", defaultVisibility: "shared",
-    fields: [{ ...category, required: true, promote: "title", name: "title" }, money("Monthly limit")],
-    statuses: ["active"],
-  },
-  savings_goal: {
-    kind: "savings_goal", label: "Savings goal", plural: "Savings goals", module: "finance", defaultVisibility: "shared",
-    fields: [title("Goal", "Emergency fund"), money("Target"), { name: "saved", label: "Saved so far", type: "money" }, due("Target date")],
-    statuses: ["active", "reached"], doneStatus: "reached",
-  },
   // ── Planner ───────────────────────────────────────────────────────────
   event: {
     kind: "event", label: "Event", plural: "Events", module: "planner", defaultVisibility: "shared",

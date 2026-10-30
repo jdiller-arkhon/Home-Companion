@@ -1,6 +1,6 @@
 import { listItems, type Item } from "./items/repo";
 import { getSettings } from "./settings";
-import { DAY, formatMoney, todayIn } from "@/lib/time";
+import { DAY, todayIn } from "@/lib/time";
 import { getWeather, describeWeather } from "./integrations/weather";
 import { haConfigured, listDevices, type Device } from "./integrations/homeassistant";
 
@@ -16,7 +16,7 @@ export async function snapshot(viewerId: string) {
   const upcoming = listItems(viewerId, { status: open, dueBefore: horizon });
 
   const by = (k: string | string[]) => upcoming.filter((i) => (Array.isArray(k) ? k : [k]).includes(i.kind));
-  const overdue = upcoming.filter((i) => i.due_at! < today && ["bill", "task", "chore", "maintenance", "errand"].includes(i.kind));
+  const overdue = upcoming.filter((i) => i.due_at! < today && ["task", "chore", "maintenance", "errand"].includes(i.kind));
 
   // Occasions recur yearly: project this year's date.
   const occasions = listItems(viewerId, { kind: "occasion" }).map((o) => {
@@ -38,10 +38,9 @@ export async function snapshot(viewerId: string) {
   const weather = await getWeather();
 
   return {
-    today, tz: s.timezone, household: s.household_name, currency: s.currency,
+    today, tz: s.timezone, household: s.household_name,
     events: by("event").filter((e) => e.due_at! >= today),
     tasks: by(["task", "chore", "errand"]),
-    bills: by(["bill", "subscription"]),
     maintenance: by(["maintenance", "vehicle"]),
     overdue, occasions, lowStock, packages, warranties,
     groceries: listItems(viewerId, { kind: "grocery", status: "open" }),
@@ -84,8 +83,6 @@ export function briefingLines(s: Snapshot, mode: "morning" | "evening" = "mornin
     lines.push(todays.length ? `${todays.length} event${todays.length > 1 ? "s" : ""} today: ${todays.map((e) => e.title).join(", ")}.` : "Your calendar is clear today.");
   }
   if (s.overdue.length) lines.push(`Overdue: ${s.overdue.map((i) => i.title).join(", ")}.`);
-  const billsSoon = s.bills.filter((b) => b.due_at! >= s.today && b.due_at! < s.today + 7 * DAY && !b.data.autopay);
-  if (billsSoon.length) lines.push(`Bills due this week: ${billsSoon.map((b) => `${b.title} ${formatMoney(b.amount_cents, s.currency)} ${when(b, s.today)}`).join("; ")}.`);
   const dueTasks = s.tasks.filter((t) => t.due_at! < dayEnd && t.due_at! >= s.today);
   if (dueTasks.length) lines.push(`Due today: ${dueTasks.map((t) => t.title).join(", ")}.`);
   const arriving = s.packages.filter((p) => p.due_at != null && p.due_at < dayEnd + DAY);

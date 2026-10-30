@@ -6,9 +6,9 @@ import { listItems } from "@/server/items/repo";
 import { getSettings } from "@/server/settings";
 import { DAY, todayIn, tzOffset } from "@/lib/time";
 
-const DOT: Record<string, string> = { event: "bg-accent", task: "bg-fg", chore: "bg-fg-2", bill: "bg-warn", occasion: "bg-ok", maintenance: "bg-fg-3", errand: "bg-fg-2", meal: "bg-fg-3" };
+const DOT: Record<string, string> = { event: "bg-accent", task: "bg-fg", chore: "bg-fg-2", occasion: "bg-ok", maintenance: "bg-fg-3", errand: "bg-fg-2", meal: "bg-fg-3" };
 
-/** Month grid of everything dated: events, tasks, chores, bills, occasions (yearly), upkeep. */
+/** Month grid of everything dated: events, tasks, chores, occasions (yearly), upkeep. */
 export async function MonthView({ month }: { month?: string }) {
   const user = await requireUser();
   const s = getSettings();
@@ -26,11 +26,11 @@ export async function MonthView({ month }: { month?: string }) {
     const l = ms + tzOffset(ms, s.timezone);
     return l - (((l % DAY) + DAY) % DAY);
   };
-  const items = listItems(user.id, { kind: ["event", "task", "chore", "bill", "maintenance", "errand", "meal"], dueAfter: gridStart - DAY, dueBefore: gridStart + 43 * DAY, limit: 2000 })
-    .filter((i) => !["done", "paid", "cancelled"].includes(i.status));
+  const items = listItems(user.id, { kind: ["event", "task", "chore", "maintenance", "errand", "meal"], dueAfter: gridStart - DAY, dueBefore: gridStart + 43 * DAY, limit: 2000 })
+    .filter((i) => !["done", "cancelled"].includes(i.status));
   const byDay = new Map<number, { title: string; kind: string; href: string }[]>();
   const add = (day: number, e: { title: string; kind: string; href: string }) => byDay.set(day, [...(byDay.get(day) ?? []), e]);
-  for (const i of items) add(localDay(i.due_at!, i.kind === "event"), { title: i.title, kind: i.kind, href: i.kind === "bill" ? "/finance" : i.kind === "maintenance" ? "/maintenance" : `/planner?tab=${i.kind === "event" ? "agenda" : i.kind === "meal" ? "meals" : i.kind === "chore" ? "chores" : "tasks"}` });
+  for (const i of items) add(localDay(i.due_at!, i.kind === "event"), { title: i.title, kind: i.kind, href: i.kind === "maintenance" ? "/maintenance" : `/planner?tab=${i.kind === "event" ? "agenda" : i.kind === "meal" ? "meals" : i.kind === "chore" ? "chores" : "tasks"}` });
   for (const o of listItems(user.id, { kind: "occasion" })) {
     const d = new Date(o.due_at!);
     for (const yr of [y - 1, y, y + 1]) add(Date.UTC(yr, d.getUTCMonth(), d.getUTCDate()), { title: o.title, kind: "occasion", href: "/planner?tab=occasions" });

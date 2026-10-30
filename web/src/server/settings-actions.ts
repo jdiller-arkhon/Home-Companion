@@ -67,7 +67,7 @@ export async function saveProfile(_: Result, f: FormData): Promise<Result> {
   const u = await requireUser();
   const theme = str(f, "theme");
   updateProfile(u.id, { name: str(f, "name"), prefs: { theme: (["light", "dark"].includes(theme) ? theme : "system") as "system", reduceMotion: f.get("reduceMotion") === "on", proactive: f.get("proactive") === "on",
-    notify: { bills: f.get("n_bills") === "on", packages: f.get("n_packages") === "on", maintenance: f.get("n_maintenance") === "on", reminders: f.get("n_reminders") === "on", security: f.get("n_security") === "on" } } });
+    notify: { packages: f.get("n_packages") === "on", maintenance: f.get("n_maintenance") === "on", reminders: f.get("n_reminders") === "on", security: f.get("n_security") === "on" } } });
   revalidatePath("/", "layout");
   return { ok: true, message: "Saved." };
 }

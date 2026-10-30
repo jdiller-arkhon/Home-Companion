@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Sparkles, Lightbulb, Wallet, CalendarDays, Wrench, Lock, Package, Activity, Settings } from "lucide-react";
+import { Home, Sparkles, Lightbulb, CalendarDays, Wrench, Lock, Package, Activity, Settings } from "lucide-react";
 import clsx from "clsx";
 import { NotificationBell } from "./notifications";
 
@@ -10,13 +10,12 @@ const NAV = [
   { href: "/assistant", label: "Assistant", icon: Sparkles, ai: true },
   { href: "/devices", label: "Home", icon: Lightbulb },
   { href: "/planner", label: "Planner", icon: CalendarDays },
-  { href: "/finance", label: "Finance", icon: Wallet },
   { href: "/maintenance", label: "Upkeep", icon: Wrench },
   { href: "/vault", label: "Vault", icon: Lock },
   { href: "/packages", label: "Packages", icon: Package },
   { href: "/system", label: "System", icon: Activity },
 ];
-const MOBILE = ["/", "/assistant", "/devices", "/planner", "/finance"];
+const MOBILE = ["/", "/assistant", "/devices", "/planner", "/maintenance"];
 
 type N = React.ComponentProps<typeof NotificationBell>;
 

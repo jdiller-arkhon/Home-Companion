@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { ArrowUpRight, Sparkles, CloudSun, Package, Receipt, ShieldCheck, CalendarDays, CheckCircle2 } from "lucide-react";
+import { ArrowUpRight, Sparkles, CloudSun, Package, Wrench, ShieldCheck, CalendarDays, CheckCircle2 } from "lucide-react";
 import { requireUser } from "@/server/auth";
 import { snapshot, briefingLines } from "@/server/briefing";
 import { describeWeather } from "@/server/integrations/weather";
-import { formatMoney, relativeDay, tzOffset } from "@/lib/time";
+import { relativeDay, tzOffset } from "@/lib/time";
 
 function greeting(tz: string) {
   const h = new Date(Date.now() + tzOffset(Date.now(), tz)).getUTCHours();
@@ -78,12 +78,12 @@ export default async function Today() {
           )}
         </Panel>
 
-        <Panel title="Bills" icon={Receipt} href="/finance" className="md:col-span-2">
-          {s.bills.length === 0 ? <Empty text="No bills due soon." href="/finance" cta="Track a bill" /> : (
+        <Panel title="Upkeep" icon={Wrench} href="/maintenance" className="md:col-span-2">
+          {s.maintenance.length === 0 ? <Empty text="Nothing due this week." href="/maintenance" cta="Add a maintenance task" /> : (
             <ul className="space-y-3">
-              {s.bills.slice(0, 4).map((b) => (
-                <li key={b.id} className="flex items-baseline text-[14px]"><span className="truncate">{b.title}</span>
-                  <span className="ml-auto pl-3 tnum">{formatMoney(b.amount_cents, s.currency)}</span></li>
+              {s.maintenance.slice(0, 4).map((m) => (
+                <li key={m.id} className="flex items-baseline text-[14px]"><span className="truncate">{m.title}</span>
+                  <span className="ml-auto pl-3 text-[13px] text-fg-3 tnum">{relativeDay(m.due_at!, s.today)}</span></li>
               ))}
             </ul>
           )}
