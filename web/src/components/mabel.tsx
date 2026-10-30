@@ -19,10 +19,10 @@ export function Mabel({ state = "idle", level = 0, size = 160, className }: { st
   }, []);
 
   const o = state === "speaking" ? Math.min(1, level * 2.6) : 0;
-  const mouthH = 2 + o * 18;
-  const mouthW = 8 + o * 3;
+  const mouthH = 1.5 + o * 13;
+  const mouthW = 6 + o * 2.5;
   const look = state === "thinking" ? { x: 4, y: -5 } : state === "listening" ? { x: 0, y: 1 } : { x: 0, y: 0 };
-  const eyeRy = blink ? 0.8 : state === "listening" ? 12.5 : 11;
+  const eyeRy = blink ? 0.8 : state === "listening" ? 15 : 14;
   const tuft = state === "listening" ? "mabel-tuft-perk" : state === "speaking" ? "mabel-tuft-flicker" : "mabel-tuft-idle";
 
   return (
@@ -30,47 +30,57 @@ export function Mabel({ state = "idle", level = 0, size = 160, className }: { st
       {state === "listening" && <span className="absolute inset-[6%] animate-ping rounded-full bg-accent/20" style={{ animationDuration: "1.6s" }} />}
       <svg viewBox="0 0 200 200" width={size} height={size} role="img" aria-label={`Mabel, ${state}`} className="relative overflow-visible">
         <defs>
-          <radialGradient id="mb-body" cx="40%" cy="30%" r="80%"><stop offset="0%" stopColor="#c7ccff" /><stop offset="55%" stopColor="#9aa2ff" /><stop offset="100%" stopColor="#7c84ee" /></radialGradient>
-          <radialGradient id="mb-belly" cx="50%" cy="40%" r="60%"><stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" /><stop offset="100%" stopColor="#eef0ff" stopOpacity="0.5" /></radialGradient>
-          <linearGradient id="mb-flame" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stopColor="#ff9f6b" /><stop offset="60%" stopColor="#ffc36b" /><stop offset="100%" stopColor="#ffe6a6" /></linearGradient>
+          <radialGradient id="mb-body" cx="38%" cy="28%" r="85%"><stop offset="0%" stopColor="#dfe2ff" /><stop offset="50%" stopColor="#b3b9ff" /><stop offset="100%" stopColor="#8f97f6" /></radialGradient>
+          <radialGradient id="mb-belly" cx="50%" cy="35%" r="65%"><stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" /><stop offset="100%" stopColor="#f1f2ff" stopOpacity="0.55" /></radialGradient>
+          <linearGradient id="mb-flame" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stopColor="#ffa877" /><stop offset="55%" stopColor="#ffcf7a" /><stop offset="100%" stopColor="#fff0be" /></linearGradient>
+          <radialGradient id="mb-blush" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#ff8fb1" stopOpacity="0.75" /><stop offset="100%" stopColor="#ff8fb1" stopOpacity="0" /></radialGradient>
         </defs>
         {/* soft ground shadow */}
-        <ellipse cx="100" cy="186" rx={state === "speaking" ? 46 : 50} ry="7" fill="#11111a" opacity="0.10" className="mabel-shadow" />
+        <ellipse cx="100" cy="184" rx="44" ry="6.5" fill="#11111a" opacity="0.09" className="mabel-shadow" />
         <g className="mabel-bob">
-          {/* flame tuft */}
-          <g className={tuft} style={{ transformOrigin: "100px 52px" }}>
-            <path d="M100 18 C110 32 116 40 112 52 C109 60 91 60 88 52 C85 44 92 34 100 18 Z" fill="url(#mb-flame)" />
-            <path d="M100 34 C105 41 107 46 105 52 C103 56 97 56 95 52 C94 47 97 41 100 34 Z" fill="#fff4d6" opacity="0.9" />
+          {/* tiny feet */}
+          <ellipse cx="78" cy="176" rx="13" ry="7.5" fill="#8f97f6" />
+          <ellipse cx="122" cy="176" rx="13" ry="7.5" fill="#8f97f6" />
+          {/* round, squishy body (big head = cute) */}
+          <path d="M100 42 C152 42 174 82 174 118 C174 158 144 178 100 178 C56 178 26 158 26 118 C26 82 48 42 100 42 Z" fill="url(#mb-body)" />
+          {/* flame tuft with a little curl */}
+          <g className={tuft} style={{ transformOrigin: "100px 46px" }}>
+            <path d="M100 14 C112 24 118 34 113 44 C109 51 91 51 88 44 C84 35 90 30 96 26 C95 33 99 36 102 33 C105 29 103 20 100 14 Z" fill="url(#mb-flame)" />
+            <ellipse cx="100" cy="41" rx="5" ry="5.5" fill="#fff6dc" opacity="0.9" />
           </g>
-          {/* body: a soft gumdrop */}
-          <path d="M100 48 C146 48 168 86 168 126 C168 164 140 180 100 180 C60 180 32 164 32 126 C32 86 54 48 100 48 Z" fill="url(#mb-body)" />
-          {/* belly patch */}
-          <ellipse cx="100" cy="146" rx="40" ry="28" fill="url(#mb-belly)" />
-          {/* little arms */}
-          <path d="M36 128 C24 132 22 146 32 150" stroke="#7c84ee" strokeWidth="10" strokeLinecap="round" fill="none" className={state === "speaking" ? "mabel-wave-l" : undefined} style={{ transformOrigin: "36px 128px" }} />
-          <path d="M164 128 C176 132 178 146 168 150" stroke="#7c84ee" strokeWidth="10" strokeLinecap="round" fill="none" className={state === "speaking" ? "mabel-wave-r" : undefined} style={{ transformOrigin: "164px 128px" }} />
+          {/* belly */}
+          <ellipse cx="100" cy="151" rx="36" ry="23" fill="url(#mb-belly)" />
+          {/* tiny heart on the belly */}
+          <path d="M100 165 C93 160 93 154 97.5 153 C99 152.6 100 154 100 155.3 C100 154 101 152.6 102.5 153 C107 154 107 160 100 165 Z" fill="#ff9fbf" opacity="0.75" />
+          {/* stubby arms */}
+          <ellipse cx="30" cy="132" rx="9" ry="12" fill="#97a0f8" className={state === "speaking" ? "mabel-wave-l" : undefined} style={{ transformOrigin: "36px 124px" }} />
+          <ellipse cx="170" cy="132" rx="9" ry="12" fill="#97a0f8" className={state === "speaking" ? "mabel-wave-r" : undefined} style={{ transformOrigin: "164px 124px" }} />
           {/* gloss */}
-          <ellipse cx="72" cy="78" rx="14" ry="8" fill="#ffffff" opacity="0.35" transform="rotate(-25 72 78)" />
-          {/* eyes */}
+          <ellipse cx="66" cy="70" rx="15" ry="8" fill="#ffffff" opacity="0.45" transform="rotate(-28 66 70)" />
+          <circle cx="86" cy="58" r="3" fill="#ffffff" opacity="0.5" />
+          {/* big sparkly eyes, set low and wide */}
           <g style={{ transform: `translate(${look.x}px, ${look.y}px)`, transition: "transform 420ms cubic-bezier(.22,1,.36,1)" }}>
-            <ellipse cx="80" cy="104" rx="9.5" ry={eyeRy} fill="#1f1d3a" style={{ transition: "ry 90ms" }} />
-            <ellipse cx="120" cy="104" rx="9.5" ry={eyeRy} fill="#1f1d3a" style={{ transition: "ry 90ms" }} />
+            <ellipse cx="74" cy="110" rx="12" ry={eyeRy} fill="#211d3d" style={{ transition: "ry 90ms" }} />
+            <ellipse cx="126" cy="110" rx="12" ry={eyeRy} fill="#211d3d" style={{ transition: "ry 90ms" }} />
             {!blink && <>
-              <circle cx="84" cy="98" r="3.4" fill="#fff" /><circle cx="124" cy="98" r="3.4" fill="#fff" />
-              <circle cx="77" cy="109" r="1.6" fill="#fff" opacity="0.8" /><circle cx="117" cy="109" r="1.6" fill="#fff" opacity="0.8" />
+              <circle cx="79" cy="103" r="5" fill="#fff" /><circle cx="131" cy="103" r="5" fill="#fff" />
+              <circle cx="69" cy="117" r="2.4" fill="#fff" opacity="0.9" /><circle cx="121" cy="117" r="2.4" fill="#fff" opacity="0.9" />
+              <path d="M71 121 q3 2 7 0" stroke="#7c84ee" strokeWidth="1.6" strokeLinecap="round" fill="none" opacity="0.7" />
+              <path d="M123 121 q3 2 7 0" stroke="#7c84ee" strokeWidth="1.6" strokeLinecap="round" fill="none" opacity="0.7" />
             </>}
           </g>
-          {/* cheeks */}
-          <ellipse cx="62" cy="122" rx="9" ry="5.5" fill="#ff8fb1" opacity={0.45 + o * 0.2} />
-          <ellipse cx="138" cy="122" rx="9" ry="5.5" fill="#ff8fb1" opacity={0.45 + o * 0.2} />
-          {/* mouth */}
+          {/* soft blush */}
+          <ellipse cx="54" cy="130" rx="14" ry="9" fill="url(#mb-blush)" opacity={0.85 + o * 0.15} />
+          <ellipse cx="146" cy="130" rx="14" ry="9" fill="url(#mb-blush)" opacity={0.85 + o * 0.15} />
+          {/* little mouth */}
           {o < 0.08 ? (
-            <path d={state === "thinking" ? "M93 126 q7 2 14 -1" : "M91 123 q9 9 18 0"} stroke="#1f1d3a" strokeWidth="3" strokeLinecap="round" fill="none" />
+            state === "thinking"
+              ? <path d="M95 132 q5 1.5 10 -1" stroke="#211d3d" strokeWidth="2.6" strokeLinecap="round" fill="none" />
+              : <path d="M93 129 q3.5 4.5 7 0 q3.5 4.5 7 0" stroke="#211d3d" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
           ) : (
             <g>
-              {/* rounded “D” mouth; its lowest point is 121 + mouthH */}
-              <path d={`M${100 - mouthW} 120 C${100 - mouthW} ${120 + mouthH * 1.3} ${100 + mouthW} ${120 + mouthH * 1.3} ${100 + mouthW} 120 Z`} fill="#3a1f3a" />
-              {o > 0.3 && <ellipse cx="100" cy={120 + mouthH * 0.78} rx={mouthW * 0.5} ry={mouthH * 0.18} fill="#ff7a93" />}
+              <path d={`M${100 - mouthW} 128 C${100 - mouthW} ${128 + mouthH * 1.3} ${100 + mouthW} ${128 + mouthH * 1.3} ${100 + mouthW} 128 Z`} fill="#3a1f3a" />
+              {o > 0.3 && <ellipse cx="100" cy={128 + mouthH * 0.78} rx={mouthW * 0.5} ry={mouthH * 0.18} fill="#ff7a93" />}
             </g>
           )}
         </g>
