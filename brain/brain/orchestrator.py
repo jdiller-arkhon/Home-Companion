@@ -18,6 +18,15 @@ from .ollama import chat_stream, pick_endpoint
 from .prompt import build_system, build_user
 
 MAX_STEPS = 6
+
+
+def _plain(s: str) -> str:
+    """Removes markdown emphasis/heading/list markers from streamed text."""
+    import re
+
+    s = re.sub(r"\*\*|__|`", "", s)
+    s = re.sub(r"(^|\n)\s*(#{1,6}\s+|[-*•]\s+|\d+\.\s+)", r"\1", s)
+    return s
 WEB_URL = os.environ.get("HEARTH_WEB_URL", "http://127.0.0.1:3000")
 
 ToolCaller = Callable[[str, dict, dict, bool], Awaitable[dict]]
@@ -49,8 +58,11 @@ async def run_turn(payload: dict, call_tool: ToolCaller = call_web_tool, stream=
         async for chunk in stream(base, model, messages, payload.get("tools", [])):
             msg = chunk.get("message", {})
             if msg.get("content"):
-                text += msg["content"]
-                yield {"type": "token", "text": msg["content"]}
+                # Small models sometimes emit markdown anyway; strip it so it is never shown or spoken.
+                piece = _plain(msg["content"])
+                text += piece
+                if piece:
+                    yield {"type": "token", "text": piece}
             calls += msg.get("tool_calls") or []
         messages.append({"role": "assistant", "content": text, **({"tool_calls": calls} if calls else {})})
         if not calls:
