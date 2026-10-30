@@ -20,6 +20,8 @@ export type HouseholdSettings = {
   backup_retention: number;
   morning_briefing_hour: number;
   evening_recap: boolean;
+  assistant_name: string;
+  assistant_voice: string;
 };
 
 const DEFAULTS: HouseholdSettings = {
@@ -40,6 +42,8 @@ const DEFAULTS: HouseholdSettings = {
   backup_retention: 14,
   morning_briefing_hour: 7,
   evening_recap: false,
+  assistant_name: "Hearth",
+  assistant_voice: "en_US-amy-medium",
 };
 
 export function getSettings(): HouseholdSettings {

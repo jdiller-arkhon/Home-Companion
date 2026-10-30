@@ -55,7 +55,8 @@ export async function saveAI(_: Result, f: FormData): Promise<Result> {
   try {
     updateSettings({ ai_endpoint: safeUrl(str(f, "ai_endpoint")) || "http://127.0.0.1:11434", ai_remote_endpoint: safeUrl(str(f, "ai_remote_endpoint")),
       ai_model: str(f, "ai_model") || "qwen2.5:3b", ai_prefer_remote: f.get("ai_prefer_remote") === "on",
-      morning_briefing_hour: Math.min(11, Math.max(4, +str(f, "morning_briefing_hour") || 7)), evening_recap: f.get("evening_recap") === "on" });
+      morning_briefing_hour: Math.min(11, Math.max(4, +str(f, "morning_briefing_hour") || 7)), evening_recap: f.get("evening_recap") === "on",
+      assistant_name: str(f, "assistant_name").slice(0, 30) || "Hearth", assistant_voice: /^[a-zA-Z0-9_-]+$/.test(str(f, "assistant_voice")) ? str(f, "assistant_voice") : "en_US-amy-medium" });
   } catch (e) { return { error: (e as Error).message }; }
   audit({ actorId: u.id, actorKind: "user", action: "settings:ai", outcome: "ok" });
   revalidatePath("/", "layout");

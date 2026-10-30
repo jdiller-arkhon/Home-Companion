@@ -19,7 +19,7 @@ export function toRows(viewerId: string, items: Item[]): RecordRow[] {
     if (i.due_at != null) {
       dueLabel = isDatetime
         ? new Date(i.due_at).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: s.timezone })
-        : `${def.dueLabel ? def.dueLabel + " " : ""}${relativeDay(i.due_at, today).replace(/^(\w)/, (c) => (def.dueLabel ? c.toLowerCase() : c))}`;
+        : `${def.dueLabel ? def.dueLabel + " " : ""}${(() => { const r = relativeDay(i.due_at, today); return def.dueLabel && /^(Today|Tomorrow|Yesterday|In )/.test(r) ? r[0].toLowerCase() + r.slice(1) : r; })()}`;
     }
     const meta: string[] = [];
     for (const k of ["category", "assignee", "carrier", "tracking", "location", "brand", "model", "aisle", "quantity", "slot", "asset", "vendor", "type", "merchant"]) {

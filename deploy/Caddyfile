@@ -1,0 +1,27 @@
+# HTTPS on your LAN with a private certificate authority (needed for iPhone/iPad
+# installation and microphone access). Install Caddy's root certificate once
+# per device — see docs/INSTALL.md.
+{$HEARTH_HOSTNAME}, localhost {
+	tls internal
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+	# The internal tool gateway is for the brain service only.
+	@internal path /api/internal/*
+	respond @internal 404
+	reverse_proxy web:3000 {
+		flush_interval -1
+	}
+}
+
+# Serves the root certificate over plain HTTP for first-time device setup.
+http://{$HEARTH_HOSTNAME}:80 {
+	handle /ca.crt {
+		root * /data/caddy/pki/authorities/local
+		rewrite * /root.crt
+		file_server
+	}
+	redir https://{host}{uri}
+}

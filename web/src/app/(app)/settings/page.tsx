@@ -5,6 +5,7 @@ import { saveHousehold, saveHomeAssistant, saveAI, saveProfile, changeSecrets, i
 import { signOut } from "@/server/session-actions";
 import { SettingsForm } from "@/components/settings-form";
 import { PageHeader, Pill } from "@/components/ui";
+import { VoicePicker } from "@/components/voice-picker";
 
 function Section({ title, desc, children }: { title: string; desc: string; children: React.ReactNode }) {
   return (
@@ -75,8 +76,9 @@ export default async function Settings() {
               { name: "ha_token", label: "Long-lived access token", type: "password", placeholder: hasSecret("ha_token") ? "•••••• (stored encrypted)" : "" },
             ]} />
           </Section>
-          <Section title="AI models" desc="Local models via Ollama. Optionally point to a stronger GPU computer on your network; Hearth falls back to the Pi when it's off.">
-            <SettingsForm action={saveAI} fields={[
+          <Section title="Assistant" desc="Runs entirely on your own hardware: Ollama for thinking, Whisper for listening, Piper for speaking. Optionally point to a stronger GPU computer on your network; Hearth falls back to the Pi when it's off.">
+            <SettingsForm action={saveAI} extra={<VoicePicker value={s.assistant_voice} name={s.assistant_name} />} fields={[
+              { name: "assistant_name", label: "Assistant name", value: s.assistant_name },
               { name: "ai_endpoint", label: "Local model server", value: s.ai_endpoint },
               { name: "ai_model", label: "Model", value: s.ai_model, hint: "qwen2.5:3b runs well on a Pi 5 (8 GB)." },
               { name: "ai_remote_endpoint", label: "GPU computer (optional)", value: s.ai_remote_endpoint, placeholder: "http://gaming-pc.local:11434" },

@@ -42,7 +42,7 @@ export function Shell({ user, household, children }: { user: { name: string }; h
         </div>
       </aside>
       <main className="pb-24 md:pb-0">{children}</main>
-      <nav className="glass md:hidden fixed inset-x-0 bottom-0 border-t border-line grid grid-cols-5 pb-[env(safe-area-inset-bottom)]">
+      <nav className="glass md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-line grid grid-cols-5 pb-[env(safe-area-inset-bottom)]">
         {NAV.filter((n) => MOBILE.includes(n.href)).map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href} className={clsx("flex flex-col items-center gap-1 py-2.5 text-[10px]", active(href) ? "text-fg" : "text-fg-3")}>
             <Icon size={20} strokeWidth={1.75} />{label}

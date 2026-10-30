@@ -1,0 +1,13 @@
+pyproject.toml
+brain/__init__.py
+brain/extract.py
+brain/main.py
+brain/ollama.py
+brain/orchestrator.py
+brain/prompt.py
+hearth_brain.egg-info/PKG-INFO
+hearth_brain.egg-info/SOURCES.txt
+hearth_brain.egg-info/dependency_links.txt
+hearth_brain.egg-info/requires.txt
+hearth_brain.egg-info/top_level.txt
+tests/test_orchestrator.py

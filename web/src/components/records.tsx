@@ -1,5 +1,5 @@
 "use client";
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { startTransition, useActionState, useEffect, useState, useTransition } from "react";
 import { Check, Plus, Trash2, Lock, Repeat, ExternalLink } from "lucide-react";
 import clsx from "clsx";
 import { KINDS, statusLabel, type Field } from "@/server/items/kinds";
@@ -48,7 +48,7 @@ export function RecordForm({ kind, row, people, onSaved, prefill }: { kind: stri
   useEffect(() => { if (state.ok) onSaved(); }, [state, onSaved]);
   const values = row?.form ?? prefill ?? {};
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); startTransition(() => action(fd)); }} className="space-y-4">
       <input type="hidden" name="_kind" value={kind} />
       {row && <input type="hidden" name="_id" value={row.id} />}
       {def.fields.map((f) => <FieldInput key={f.name} f={f} value={values[f.name]} people={people} error={state.fieldErrors?.[f.name]} />)}

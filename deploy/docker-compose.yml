@@ -1,0 +1,50 @@
+# Hearth on a Raspberry Pi 5 (8 GB). Start with:  docker compose -f deploy/docker-compose.yml up -d
+# Only Caddy publishes ports. Web, brain and Ollama talk on a private network
+# and are never exposed to the internet.
+name: hearth
+
+services:
+  caddy:
+    image: caddy:2.8
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    environment: [HEARTH_HOSTNAME=${HEARTH_HOSTNAME:-hearth.local}]
+    depends_on: [web]
+
+  web:
+    build: ../web
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      HEARTH_BRAIN_URL: http://brain:8100
+      HEARTH_OLLAMA_URL: http://ollama:11434
+      TZ: ${TZ:-America/New_York}
+    volumes:
+      - ../data/web:/data
+      - ../data/backups:/data/backups
+      - /sys/class/thermal:/sys/class/thermal:ro
+    mem_limit: 768m
+
+  brain:
+    build: ../brain
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      HEARTH_WEB_URL: http://web:3000
+      HEARTH_VOICE_DIR: /models/voice
+      HEARTH_WHISPER_MODEL: ${HEARTH_WHISPER_MODEL:-base.en}
+    volumes: ["../data/voice:/models/voice"]
+    mem_limit: 1536m
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes: ["../data/ollama:/root/.ollama"]
+    environment: [OLLAMA_KEEP_ALIVE=30m, OLLAMA_NUM_PARALLEL=1]
+    mem_limit: 5g
+
+volumes:
+  caddy-data:

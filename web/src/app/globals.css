@@ -5,7 +5,7 @@
 :root {
   --bg: #faf9f7;            /* warm white */
   --bg-elev: #ffffff;
-  --surface: rgb(255 255 255 / 0.72);
+  --surface: rgb(250 249 247 / 0.94);
   --fg: #111113;            /* graphite */
   --fg-2: #55555c;
   --fg-3: #8e8e95;
@@ -22,7 +22,7 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0b0b0c; --bg-elev: #141416; --surface: rgb(22 22 24 / 0.72);
+    --bg: #0b0b0c; --bg-elev: #141416; --surface: rgb(16 16 18 / 0.94);
     --fg: #ededef; --fg-2: #a1a1a8; --fg-3: #6b6b72;
     --line: rgb(255 255 255 / 0.07); --line-strong: rgb(255 255 255 / 0.13); --fill: rgb(255 255 255 / 0.04);
     --accent: #8f97ff; --accent-soft: rgb(143 151 255 / 0.12);
@@ -31,7 +31,7 @@
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0b0b0c; --bg-elev: #141416; --surface: rgb(22 22 24 / 0.72);
+  --bg: #0b0b0c; --bg-elev: #141416; --surface: rgb(16 16 18 / 0.94);
   --fg: #ededef; --fg-2: #a1a1a8; --fg-3: #6b6b72;
   --line: rgb(255 255 255 / 0.07); --line-strong: rgb(255 255 255 / 0.13); --fill: rgb(255 255 255 / 0.04);
   --accent: #8f97ff; --accent-soft: rgb(143 151 255 / 0.12);

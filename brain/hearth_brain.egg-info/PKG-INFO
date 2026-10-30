@@ -1,0 +1,16 @@
+Metadata-Version: 2.4
+Name: hearth-brain
+Version: 0.1.0
+Summary: Local AI orchestration for Hearth (Ollama only, no cloud)
+Requires-Python: >=3.11
+Requires-Dist: fastapi>=0.115
+Requires-Dist: uvicorn[standard]>=0.30
+Requires-Dist: httpx>=0.27
+Requires-Dist: python-multipart>=0.0.9
+Requires-Dist: pypdf>=4.3
+Provides-Extra: ocr
+Requires-Dist: pytesseract>=0.3.10; extra == "ocr"
+Requires-Dist: pillow>=10.4; extra == "ocr"
+Provides-Extra: dev
+Requires-Dist: pytest>=8; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.23; extra == "dev"
