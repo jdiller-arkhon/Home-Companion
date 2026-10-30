@@ -43,7 +43,7 @@ const DEFAULTS: HouseholdSettings = {
   backup_retention: 14,
   morning_briefing_hour: 7,
   evening_recap: false,
-  assistant_name: "Hearth",
+  assistant_name: "Mabel",
   assistant_voice: "kokoro:af_heart",
   kiosk_motion_entity: "",
 };

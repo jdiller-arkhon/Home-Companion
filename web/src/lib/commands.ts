@@ -17,7 +17,7 @@ function splitItems(s: string): string[] {
 }
 
 export function parseCommand(input: string, routineNames: string[] = []): Command {
-  const t = input.trim().replace(/^(hey\s+)?(hearth|siri)[,\s]+/i, "").replace(/[.!?]+$/, "");
+  const t = input.trim().replace(/^(hey\s+)?(hearth|siri|mabel|mable)[,\s]+/i, "").replace(/[.!?]+$/, "");
   const lower = t.toLowerCase();
   let m = /^(?:please\s+)?(?:add|put)\s+(.+)$/i.exec(t);
   if (m && LIST.test(m[1])) {

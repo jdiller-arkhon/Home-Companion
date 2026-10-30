@@ -11,7 +11,7 @@ export type ChatMsg = { role: "user" | "assistant" | "tool"; content: string };
 export type Action = { id: string; summary: string; level: string };
 
 
-export function Assistant({ conversationId, initial, actions, suggestions }: { conversationId?: string; initial: ChatMsg[]; actions: Action[]; suggestions: string[] }) {
+export function Assistant({ conversationId, initial, actions, suggestions, name }: { conversationId?: string; initial: ChatMsg[]; actions: Action[]; suggestions: string[]; name: string }) {
   const router = useRouter();
   const [msgs, setMsgs] = useState<ChatMsg[]>(initial);
   const [input, setInput] = useState("");
@@ -90,7 +90,7 @@ export function Assistant({ conversationId, initial, actions, suggestions }: { c
         {msgs.length === 0 && (
           <div className="rise pt-10 text-center">
             <div className="mx-auto grid size-11 place-items-center rounded-full bg-accent-soft text-accent"><Sparkles size={20} /></div>
-            <h2 className="mt-4 text-[22px] font-semibold tracking-tight">How can I help at home?</h2>
+            <h2 className="mt-4 text-[22px] font-semibold tracking-tight">Hi, I'm {name}. How can I help?</h2>
             <p className="mt-1 text-[14px] text-fg-2">I can plan, remember, look things up in your vault and control the house — sensitive actions always ask first.</p>
             <div className="mx-auto mt-6 flex max-w-[560px] flex-wrap justify-center gap-2">
               {suggestions.map((s) => <button key={s} onClick={() => send(s)} className="press rounded-full border border-line px-3.5 py-1.5 text-[13px] text-fg-2 hover:bg-fill hover:text-fg">{s}</button>)}
@@ -124,7 +124,7 @@ export function Assistant({ conversationId, initial, actions, suggestions }: { c
         {status && <p className="mb-2 text-center text-[12px] text-fg-3" role="status">{status}</p>}
         <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="glass card flex items-end gap-2 p-2">
           <button type="button" onClick={voice} aria-label={listening ? "Stop listening" : "Speak"} className={clsx("press grid size-9 shrink-0 place-items-center rounded-full", listening ? "bg-bad text-white" : "text-fg-2 hover:bg-fill")}><Mic size={17} /></button>
-          <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={1} placeholder="Ask anything about home…" aria-label="Message"
+          <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={1} placeholder={`Ask ${name} anything…`} aria-label="Message"
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
             className="max-h-40 min-h-9 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] outline-none" />
           <button type="button" onClick={() => setSpeak(!speak)} aria-pressed={speak} aria-label="Read replies aloud" className={clsx("press grid size-9 shrink-0 place-items-center rounded-full", speak ? "text-accent" : "text-fg-3 hover:bg-fill")}><Volume2 size={16} /></button>

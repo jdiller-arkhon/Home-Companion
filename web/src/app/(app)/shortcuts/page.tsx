@@ -7,7 +7,7 @@ const STEPS = [
   "Headers: Authorization = Bearer <your key> (create one in Settings → Siri & Shortcuts).",
   "Request Body: JSON, key “text”, value: the Dictated Text variable.",
   "Add “Speak Text” with the Contents of URL (and “Show Result” if you like reading it).",
-  "Name the shortcut “Hearth”. Now say “Hey Siri, Hearth” and speak your request.",
+  "Name the shortcut “Mabel”. Now say “Hey Siri, Mabel” and speak your request.",
 ];
 
 const EXAMPLES = [

@@ -23,7 +23,7 @@ const MOBILE = ["/", "/assistant", "/devices", "/planner", "/maintenance"];
 
 type N = React.ComponentProps<typeof NotificationBell>;
 
-export function Shell({ user, household, children, notifications }: { user: { name: string }; household: string; children: React.ReactNode; notifications: N }) {
+export function Shell({ user, household, children, notifications, assistant = "Assistant" }: { user: { name: string }; household: string; children: React.ReactNode; notifications: N; assistant?: string }) {
   const path = usePathname();
   const active = (h: string) => (h === "/" ? path === "/" : path.startsWith(h));
   return (
@@ -34,13 +34,13 @@ export function Shell({ user, household, children, notifications }: { user: { na
           <span className="text-[15px] font-semibold tracking-tight">{household}</span>
         </div>
         <nav className="flex flex-col gap-0.5">
-          {NAV.map(({ href, label, icon: Icon, ai }) => (
+          {NAV.map(({ href, label: l, icon: Icon, ai }) => { const label = ai ? assistant : l; return (
             <Link key={href} href={href} className={clsx("press relative flex items-center gap-3 rounded-lg px-2.5 py-2 text-[14px] transition-colors",
               active(href) ? "text-fg font-medium" : "text-fg-2 hover:text-fg")}>
               {active(href) && <motion.span layoutId="nav-pill" transition={spring} className="absolute inset-0 rounded-lg bg-fill" style={{ boxShadow: "inset 0 0 0 1px var(--line)" }} />}
               <Icon size={16} strokeWidth={1.75} className={clsx("relative", ai && "text-accent")} /><span className="relative">{label}</span>
             </Link>
-          ))}
+          ); })}
         </nav>
         <div className="mt-auto flex items-center gap-2.5 rounded-lg px-2.5 py-2">
           <div className="size-7 rounded-full bg-accent-soft text-accent grid place-items-center text-[12px] font-semibold">{user.name[0]}</div>
@@ -58,12 +58,12 @@ export function Shell({ user, household, children, notifications }: { user: { na
         {children}
       </main>
       <nav className="glass md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-line grid grid-cols-5 pb-[env(safe-area-inset-bottom)]">
-        {NAV.filter((n) => MOBILE.includes(n.href)).map(({ href, label, icon: Icon }) => (
+        {NAV.filter((n) => MOBILE.includes(n.href)).map(({ href, label: l, icon: Icon, ai }) => { const label = ai ? assistant : l; return (
           <Link key={href} href={href} className={clsx("relative flex flex-col items-center gap-1 py-2.5 text-[10px] transition-colors", active(href) ? "text-fg" : "text-fg-3")}>
             {active(href) && <motion.span layoutId="tab-dot" transition={spring} className="absolute top-1 h-[3px] w-5 rounded-full bg-fg" />}
             <motion.span whileTap={{ scale: 0.86 }} className="grid place-items-center"><Icon size={20} strokeWidth={1.75} /></motion.span>{label}
           </Link>
-        ))}
+        ); })}
       </nav>
     </div>
   );

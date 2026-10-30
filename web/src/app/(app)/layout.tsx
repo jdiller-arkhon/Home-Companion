@@ -15,7 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <MotionRoot reduce={user.prefs.reduceMotion}>
       <Pwa theme={user.prefs.theme} reduceMotion={user.prefs.reduceMotion} />
-      <Shell user={{ name: user.name }} household={getSettings().household_name}
+      <Shell user={{ name: user.name }} household={getSettings().household_name} assistant={getSettings().assistant_name}
         notifications={{ items: inbox(user.id, 30).map(({ id, title, body, href, read, created_at }) => ({ id, title, body, href, read, created_at })), unread: unreadCount(user.id) }}>{children}</Shell>
     </MotionRoot>
   );
