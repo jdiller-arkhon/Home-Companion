@@ -1,0 +1,45 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+const calls: unknown[] = [];
+vi.mock("./integrations/homeassistant", () => ({
+  haConfigured: () => true,
+  callService: vi.fn(async (...a: unknown[]) => { calls.push(a); return []; }),
+  listDevices: vi.fn(async () => [{ id: "person.alex", domain: "person", state: "not_home" }]),
+}));
+vi.mock("./push", () => ({ sendPush: vi.fn() }));
+import { openDatabase, useDatabaseForTests, db } from "./db/client";
+import { saveRoutine, tickRoutines, listRoutines } from "./routines";
+import { updateSettings } from "./settings";
+
+beforeEach(() => {
+  calls.length = 0;
+  useDatabaseForTests(openDatabase(":memory:"));
+  db().prepare("INSERT INTO users (id,name,email,password_hash,role,created_at) VALUES ('a','Alex','a@h','x','admin',1)").run();
+  updateSettings({ timezone: "UTC" });
+});
+
+const base = { name: "Goodnight", time: "22:30", days: [1, 2, 3, 4, 5], presence: "any" as const };
+
+describe("routines", () => {
+  it("refuses unsafe unattended actions", () => {
+    expect(() => saveRoutine("a", { ...base, actions: [{ entity_id: "lock.front", action: "unlock" }] })).toThrow();
+    expect(() => saveRoutine("a", { ...base, actions: [{ entity_id: "cover.garage", action: "open" }] })).toThrow();
+    expect(() => saveRoutine("a", { ...base, actions: [{ entity_id: "alarm_control_panel.home", action: "turn_off" }] })).toThrow(/isn't allowed/);
+  });
+
+  it("fires at the scheduled minute on the right days, once", async () => {
+    saveRoutine("a", { ...base, actions: [{ entity_id: "lock.front", action: "lock" }, { entity_id: "light.porch", action: "turn_off" }] });
+    const mon2230 = Date.UTC(2026, 10, 2, 22, 30, 5); // Monday
+    expect(await tickRoutines(mon2230 - 60_000)).toBe(0);
+    expect(await tickRoutines(mon2230)).toBe(1);
+    expect(await tickRoutines(mon2230 + 20_000)).toBe(0);
+    expect(calls).toHaveLength(2);
+    expect(await tickRoutines(Date.UTC(2026, 10, 1, 22, 30))).toBe(0); // Sunday
+  });
+
+  it("skips when the presence condition isn't met", async () => {
+    saveRoutine("a", { ...base, presence: "home", actions: [{ entity_id: "light.porch", action: "turn_on" }] });
+    await tickRoutines(Date.UTC(2026, 10, 2, 22, 30));
+    expect(calls).toHaveLength(0);
+    expect(listRoutines()[0].last_result).toMatch(/skipped: Nobody was home/);
+  });
+});

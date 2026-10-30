@@ -8,7 +8,7 @@ import { completeItem, createItem, deleteItem, getItem, parseInput, setStatus, u
 
 export type ItemFormState = { ok?: boolean; error?: string; fieldErrors?: Record<string, string> };
 
-const FINANCE = ["bill", "subscription", "expense", "budget", "savings_goal"];
+const FINANCE = ["bill", "subscription", "expense", "budget", "savings_goal", "account"];
 
 function done(kind: string, userId: string) {
   publish(`items:${kind}`, userId);

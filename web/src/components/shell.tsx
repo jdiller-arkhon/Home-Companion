@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Sparkles, Lightbulb, Wallet, CalendarDays, Wrench, Lock, Package, Activity, Settings } from "lucide-react";
 import clsx from "clsx";
+import { NotificationBell } from "./notifications";
 
 const NAV = [
   { href: "/", label: "Today", icon: Home },
@@ -17,7 +18,9 @@ const NAV = [
 ];
 const MOBILE = ["/", "/assistant", "/devices", "/planner", "/finance"];
 
-export function Shell({ user, household, children }: { user: { name: string }; household: string; children: React.ReactNode }) {
+type N = React.ComponentProps<typeof NotificationBell>;
+
+export function Shell({ user, household, children, notifications }: { user: { name: string }; household: string; children: React.ReactNode; notifications: N }) {
   const path = usePathname();
   const active = (h: string) => (h === "/" ? path === "/" : path.startsWith(h));
   return (
@@ -38,10 +41,17 @@ export function Shell({ user, household, children }: { user: { name: string }; h
         <div className="mt-auto flex items-center gap-2.5 rounded-lg px-2.5 py-2">
           <div className="size-7 rounded-full bg-accent-soft text-accent grid place-items-center text-[12px] font-semibold">{user.name[0]}</div>
           <span className="text-[13px] text-fg-2 flex-1 truncate">{user.name}</span>
+          <NotificationBell {...notifications} />
           <Link href="/settings" aria-label="Settings" className="text-fg-3 hover:text-fg"><Settings size={16} strokeWidth={1.75} /></Link>
         </div>
       </aside>
-      <main className="pb-24 md:pb-0">{children}</main>
+      <main className="pb-24 md:pb-0">
+        <div className="md:hidden flex items-center justify-end gap-3 px-5 pt-[max(env(safe-area-inset-top),12px)]">
+          <NotificationBell {...notifications} />
+          <Link href="/settings" aria-label="Settings" className="text-fg-3"><Settings size={17} strokeWidth={1.75} /></Link>
+        </div>
+        {children}
+      </main>
       <nav className="glass md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-line grid grid-cols-5 pb-[env(safe-area-inset-bottom)]">
         {NAV.filter((n) => MOBILE.includes(n.href)).map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href} className={clsx("flex flex-col items-center gap-1 py-2.5 text-[10px]", active(href) ? "text-fg" : "text-fg-3")}>

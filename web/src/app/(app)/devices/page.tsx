@@ -5,11 +5,17 @@ import { summarizeHome } from "@/server/briefing";
 import { DeviceGrid } from "@/components/devices";
 import { PageHeader, Pill } from "@/components/ui";
 import { Live } from "@/components/live";
+import { Tabs } from "@/components/tabs";
+import { Routines } from "@/components/routines";
+import { FloorPlan } from "@/components/floorplan";
+import { listRoutines } from "@/server/routines";
+import { getFloorPlan } from "@/server/floorplan";
 
 export const dynamic = "force-dynamic";
 
-export default async function Devices() {
+export default async function Devices({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   await requireUser();
+  const tab = (await searchParams).tab ?? "devices";
   let devices: Device[] | null = null;
   let error: string | null = null;
   if (haConfigured()) {
@@ -33,7 +39,17 @@ export default async function Devices() {
           <div className="card p-6 text-[14px]"><p className="font-medium text-bad">Home Assistant is unavailable</p><p className="mt-1 text-fg-2">{error}</p></div>
         ) : devices!.length === 0 ? (
           <p className="text-[14px] text-fg-3">Home Assistant is connected but reports no supported devices yet.</p>
-        ) : <DeviceGrid devices={devices!} />}
+        ) : (
+          <>
+            <Tabs base="/devices" active={tab} tabs={[{ key: "devices", label: "Devices" }, { key: "plan", label: "Floor plan" }, { key: "routines", label: "Routines" }]} />
+            <div className="mt-6">
+              {tab === "routines" ? (
+                <Routines entities={devices!.map((d) => ({ id: d.id, name: d.name, domain: d.domain }))}
+                  routines={listRoutines().map((r) => ({ id: r.id, name: r.name, time: r.time, days: r.days, presence: r.presence, actions: r.actions, enabled: r.enabled, last: r.last_result }))} />
+              ) : tab === "plan" ? <FloorPlan plan={getFloorPlan()} devices={devices!} /> : <DeviceGrid devices={devices!} />}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

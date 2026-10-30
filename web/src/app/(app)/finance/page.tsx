@@ -2,6 +2,8 @@ import { ModulePage } from "@/components/module-page";
 import { requireUser } from "@/server/auth";
 import { financeSummary } from "@/server/finance";
 import { formatMoney } from "@/lib/time";
+import { BankImport } from "@/components/bank-import";
+import { listItems } from "@/server/items/repo";
 
 async function Overview() {
   const user = await requireUser();
@@ -43,10 +45,26 @@ async function Overview() {
   );
 }
 
+async function Balances() {
+  const user = await requireUser();
+  const accts = listItems(user.id, { kind: "account", status: "active" });
+  if (!accts.length) return null;
+  const total = accts.reduce((a, x) => a + (x.amount_cents ?? 0), 0);
+  const oldest = Math.min(...accts.map((a) => a.due_at ?? Date.now()));
+  return (
+    <section className="card rise p-5">
+      <p className="eyebrow">Total across accounts</p>
+      <p className="mt-2 tnum text-[32px] font-semibold tracking-tight">{formatMoney(total)}</p>
+      <p className="mt-1 text-[13px] text-fg-3">As of {new Date(oldest).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })} — from your latest statement imports, not live.</p>
+    </section>
+  );
+}
+
 export default async function Finance({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   return <ModulePage base="/finance" title="Finance" subtitle="Hearth tracks and reminds — it never moves money." tab={(await searchParams).tab}
-    before={(k) => (k === "overview" ? <Overview /> : null)} tabs={[
+    actions={<BankImport />} before={(k) => (k === "overview" ? <Overview /> : k === "accounts" ? <Balances /> : null)} tabs={[
       { key: "overview", label: "Bills", kinds: ["bill"] },
+      { key: "accounts", label: "Accounts", kinds: ["account"], empty: { account: "Import a statement from Wescom, or add an account to track its balance by hand." } },
       { key: "subscriptions", label: "Subscriptions", kinds: ["subscription"] },
       { key: "spending", label: "Spending", kinds: ["expense"] },
       { key: "budgets", label: "Budgets", kinds: ["budget"] },

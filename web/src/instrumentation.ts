@@ -1,8 +1,16 @@
-/** Background jobs (Node runtime only): nightly encrypted backup. */
+/** Background jobs (Node runtime only): routines each minute, reminders every 5 min, nightly backup. */
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs" || process.env.HEARTH_DISABLE_SCHEDULER === "true") return;
   const { runBackup, lastBackup } = await import("./server/backup");
   const { log } = await import("./server/log");
+  const { sweepReminders } = await import("./server/reminders");
+  const { tickRoutines } = await import("./server/routines");
+  setInterval(async () => {
+    try { await tickRoutines(); } catch (e) { log.error("routines.failed", { error: String(e) }); }
+  }, 60_000).unref();
+  setInterval(async () => {
+    try { await sweepReminders(); } catch (e) { log.error("reminders.failed", { error: String(e) }); }
+  }, 5 * 60_000).unref();
   setInterval(async () => {
     const last = lastBackup();
     const h = new Date().getHours();

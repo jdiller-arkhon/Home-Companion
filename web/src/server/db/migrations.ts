@@ -136,4 +136,33 @@ export const migrations: { version: number; name: string; sql: string }[] = [
       );
     `,
   },
+  {
+    version: 2,
+    name: "push_routines",
+    sql: `
+      CREATE TABLE push_subscriptions (
+        endpoint TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        keys TEXT NOT NULL,
+        user_agent TEXT,
+        created_at INTEGER NOT NULL
+      );
+      CREATE INDEX notifications_user ON notifications(user_id, created_at DESC);
+
+      -- Household routines: time triggers + presence conditions + Home Assistant actions.
+      CREATE TABLE routines (
+        id TEXT PRIMARY KEY,
+        owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        time TEXT NOT NULL,          -- HH:MM household time
+        days TEXT NOT NULL,          -- JSON array of 0-6 (Sun-Sat)
+        presence TEXT NOT NULL DEFAULT 'any' CHECK (presence IN ('any','home','away')),
+        actions TEXT NOT NULL,       -- JSON [{entity_id, action, value?}]
+        last_run INTEGER,
+        last_result TEXT,
+        created_at INTEGER NOT NULL
+      );
+    `,
+  },
 ];

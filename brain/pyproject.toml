@@ -7,7 +7,7 @@ dependencies = ["fastapi>=0.115", "uvicorn[standard]>=0.30", "httpx>=0.27", "pyt
 
 [project.optional-dependencies]
 voice = ["faster-whisper>=1.0", "piper-tts>=1.3"]
-ocr = ["pytesseract>=0.3.10", "pillow>=10.4"]
+ocr = ["pytesseract>=0.3.10", "pillow>=10.4", "pypdfium2>=4.30"]
 dev = ["pytest>=8", "pytest-asyncio>=0.23"]
 
 [tool.pytest.ini_options]

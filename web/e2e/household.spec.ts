@@ -103,6 +103,37 @@ test.describe.serial("household flows", () => {
     await expect(page.getByText(/isn't reachable right now/)).toBeVisible({ timeout: 15_000 });
   });
 
+  test("month calendar, email paste, bank import, notifications", async () => {
+    await page.goto("/planner?tab=agenda");
+    await expect(page.getByRole("link", { name: "Next month" })).toBeVisible();
+    await page.getByRole("link", { name: "Next month" }).click();
+    await expect(page.getByText(/November 2026|December 2026/)).toBeVisible();
+    await shot(page, "calendar");
+
+    await page.goto("/packages");
+    await page.getByRole("button", { name: "Paste shipping email" }).click();
+    await page.locator("[role=dialog] textarea").fill("From: \"Bloom Coffee\" <x@y.z>\nSubject: Your scale has shipped\nUPS tracking: 1Z999AA10123456785\nArriving Nov 5");
+    await page.getByRole("button", { name: "Find tracking number" }).click();
+    await expect(page.locator("[role=dialog] [name=tracking]")).toHaveValue("1Z999AA10123456785");
+    await page.locator("[role=dialog] button", { hasText: /^Add / }).click();
+    await expect(page.getByText("Your scale has shipped")).toBeVisible();
+    await expect(page.locator('a[href*="ups.com/track"]').first()).toBeVisible();
+
+    await page.goto("/finance?tab=accounts");
+    await page.getByRole("button", { name: "Import statement" }).click();
+    const ofx = "<OFX><FI><ORG>Wescom</ORG></FI><ACCTID>99887766<ACCTTYPE>CHECKING<BANKTRANLIST><STMTTRN><DTPOSTED>20261028<TRNAMT>-23.40<FITID>X1<NAME>TRADER JOES</STMTTRN></BANKTRANLIST><LEDGERBAL><BALAMT>3120.00<DTASOF>20261030</LEDGERBAL></OFX>";
+    await page.setInputFiles("[role=dialog] input[type=file]", { name: "wescom.qfx", mimeType: "application/octet-stream", buffer: Buffer.from(ofx) });
+    await page.locator("[role=dialog] button", { hasText: /^Import$/ }).click();
+    await expect(page.getByRole("status")).toContainText("Imported 1 transaction");
+    await page.keyboard.press("Escape");
+    await expect(page.getByText("$3,120.00").first()).toBeVisible();
+    await shot(page, "accounts");
+
+    await page.goto("/settings");
+    await expect(page.getByRole("button", { name: "Enable on this device" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Notifications/ }).first()).toBeVisible();
+  });
+
   test("iPhone layout", async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, storageState: await page.context().storageState() });
     const p = await ctx.newPage();

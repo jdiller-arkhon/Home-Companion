@@ -6,6 +6,8 @@ import { signOut } from "@/server/session-actions";
 import { SettingsForm } from "@/components/settings-form";
 import { PageHeader, Pill } from "@/components/ui";
 import { VoicePicker } from "@/components/voice-picker";
+import { PushToggle } from "@/components/notifications";
+import { subscriptionCount } from "@/server/push";
 
 function Section({ title, desc, children }: { title: string; desc: string; children: React.ReactNode }) {
   return (
@@ -40,6 +42,9 @@ export default async function Settings() {
             { name: "n_reminders", label: "Notify me about tasks, chores & occasions", type: "checkbox", value: p.notify?.reminders ?? true },
             { name: "n_security", label: "Notify me about doors, locks & device problems", type: "checkbox", value: p.notify?.security ?? true },
           ]} />
+        </Section>
+        <Section title="Notifications" desc="Reminders for bills, deliveries, upkeep, occasions and home security, plus your morning briefing. Choose categories under Your profile.">
+          <PushToggle devices={subscriptionCount(user.id)} />
         </Section>
         <Section title="Password & PIN" desc="Your PIN confirms sensitive actions (unlocking doors, deleting records) and switches profiles quickly on the iPad.">
           <SettingsForm action={changeSecrets} submit="Update" fields={[

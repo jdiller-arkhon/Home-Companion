@@ -31,7 +31,7 @@ type ToolDef<A extends z.ZodTypeAny> = {
 function tool<A extends z.ZodTypeAny>(d: ToolDef<A>) { return d; }
 
 const PLANNER_KINDS = ["task", "grocery", "event", "note", "errand", "meal", "chore", "occasion", "recipe", "goal"] as const;
-const FINANCE_KINDS = ["bill", "subscription", "expense", "budget", "savings_goal"] as const;
+const FINANCE_KINDS = ["bill", "subscription", "expense", "budget", "savings_goal", "account"] as const;
 const OTHER_KINDS = ["appliance", "maintenance", "vehicle", "repair", "consumable", "package"] as const;
 const ALL_KINDS = [...PLANNER_KINDS, ...FINANCE_KINDS, ...OTHER_KINDS] as const;
 

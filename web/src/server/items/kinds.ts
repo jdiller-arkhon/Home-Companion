@@ -64,6 +64,12 @@ export const KINDS: Record<string, KindDef> = {
     fields: [title("Merchant", "Farmers market"), money(), due("Date", "date", true), category, notes],
     statuses: ["recorded"],
   },
+  account: {
+    kind: "account", label: "Account", plural: "Accounts", module: "finance", defaultVisibility: "shared",
+    fields: [title("Account", "Wescom Checking"), money("Balance"), due("Balance as of", "date"), { name: "last4", label: "Last 4 digits", type: "text", hint: "Never enter full account numbers." },
+      { name: "institution", label: "Institution", type: "text", placeholder: "Wescom Credit Union" }],
+    statuses: ["active", "closed"],
+  },
   budget: {
     kind: "budget", label: "Budget", plural: "Budgets", module: "finance", defaultVisibility: "shared",
     fields: [{ ...category, required: true, promote: "title", name: "title" }, money("Monthly limit")],
