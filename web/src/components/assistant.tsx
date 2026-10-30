@@ -5,7 +5,9 @@ import Link from "next/link";
 import { ArrowUp, Mic, Sparkles, ShieldAlert, Check, X, Square, Volume2 } from "lucide-react";
 import clsx from "clsx";
 import { ElevateDialog } from "./elevate";
-import { Recorder, transcribe, say, hush } from "./voice";
+import { Recorder, transcribe, say, hush, onLevel } from "./voice";
+import { Mabel, type MabelState } from "./mabel";
+import { AnimatePresence, motion } from "motion/react";
 
 export type ChatMsg = { role: "user" | "assistant" | "tool"; content: string };
 export type Action = { id: string; summary: string; level: string };
@@ -24,13 +26,19 @@ export function Assistant({ conversationId, initial, actions, suggestions, name 
   const abort = useRef<AbortController | null>(null);
   const rec = useRef<Recorder | null>(null);
   const end = useRef<HTMLDivElement>(null);
+  const [level, setLevel] = useState(0);
+  const [speaking, setSpeaking] = useState(false);
+  const [streaming, setStreaming] = useState(false);
+  useEffect(() => onLevel((l, s) => { setLevel(l); setSpeaking(s); }), []);
+  const mabelState: MabelState = listening ? "listening" : speaking ? "speaking" : busy && !streaming ? "thinking" : "idle";
+  const statusText = { listening: "Listening…", thinking: "Thinking…", speaking: "Speaking", idle: "" }[mabelState];
 
   useEffect(() => { setMsgs(initial); setConvId(conversationId); }, [initial, conversationId]);
   useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [msgs, actions]);
 
   async function send(text: string, viaVoice = false) {
     if (!text.trim() || busy) return;
-    setInput(""); setBusy(true); setStatus(undefined);
+    setInput(""); setBusy(true); setStreaming(false); setStatus(undefined);
     setMsgs((m) => [...m, { role: "user", content: text }, { role: "assistant", content: "" }]);
     abort.current = new AbortController();
     let full = "";
@@ -46,7 +54,7 @@ export function Assistant({ conversationId, initial, actions, suggestions, name 
           if (!p.startsWith("data: ")) continue;
           const ev = JSON.parse(p.slice(6));
           if (ev.type === "conversation") setConvId(ev.id);
-          else if (ev.type === "token") { full += ev.text; setMsgs((m) => [...m.slice(0, -1), { role: "assistant", content: full }]); }
+          else if (ev.type === "token") { full += ev.text; setStreaming(true); setMsgs((m) => [...m.slice(0, -1), { role: "assistant", content: full }]); }
           else if (ev.type === "tool") setStatus(ev.status === "needs_confirmation" ? `Waiting for your approval: ${ev.summary}` : ev.status === "running" ? `Working: ${ev.summary ?? ev.name}…` : undefined);
           else if (ev.type === "error") setStatus(ev.message);
         }
@@ -88,8 +96,10 @@ export function Assistant({ conversationId, initial, actions, suggestions, name 
     <div className="flex min-h-[calc(100dvh-6rem)] flex-col md:min-h-dvh">
       <div className="flex-1 space-y-6 pb-6">
         {msgs.length === 0 && (
-          <div className="rise pt-10 text-center">
-            <div className="mx-auto grid size-11 place-items-center rounded-full bg-accent-soft text-accent"><Sparkles size={20} /></div>
+          <div className="pt-6 text-center">
+            <motion.div initial={{ opacity: 0, scale: 0.85, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ type: "spring", stiffness: 260, damping: 22 }} className="mx-auto w-fit">
+              <Mabel state={mabelState} level={level} size={168} />
+            </motion.div>
             <h2 className="mt-4 text-[22px] font-semibold tracking-tight">Hi, I'm {name}. How can I help?</h2>
             <p className="mt-1 text-[14px] text-fg-2">I can plan, remember, look things up in your vault and control the house — sensitive actions always ask first.</p>
             <div className="mx-auto mt-6 flex max-w-[560px] flex-wrap justify-center gap-2">
@@ -97,6 +107,21 @@ export function Assistant({ conversationId, initial, actions, suggestions, name 
             </div>
           </div>
         )}
+        <AnimatePresence>
+          {msgs.length > 0 && (
+            <motion.div key="mabel-bar" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="glass sticky top-0 z-10 -mx-2 flex items-center gap-3 rounded-b-2xl px-2 py-2">
+              <Mabel state={mabelState} level={level} size={52} />
+              <div className="min-w-0">
+                <div className="text-[14px] font-semibold tracking-tight">{name}</div>
+                <AnimatePresence mode="wait">
+                  <motion.div key={statusText || "online"} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: 0.18 }}
+                    className="text-[12px] text-fg-3">{statusText || "Here when you need me"}</motion.div>
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         {msgs.map((m, i) => (
           <div key={i} className={clsx("rise flex", m.role === "user" ? "justify-end" : "justify-start")}>
             {m.role === "tool" ? (
