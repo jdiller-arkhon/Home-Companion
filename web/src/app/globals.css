@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+/* Hearth design language — Apple warmth, Vercel precision.
+   Neutral-first; periwinkle is reserved for intelligence. */
+:root {
+  --bg: #faf9f7;            /* warm white */
+  --bg-elev: #ffffff;
+  --surface: rgb(255 255 255 / 0.72);
+  --fg: #111113;            /* graphite */
+  --fg-2: #55555c;
+  --fg-3: #8e8e95;
+  --line: rgb(17 17 19 / 0.08);
+  --line-strong: rgb(17 17 19 / 0.14);
+  --fill: rgb(17 17 19 / 0.04);
+  --accent: #6e78f0;        /* restrained periwinkle */
+  --accent-soft: rgb(110 120 240 / 0.10);
+  --ok: #2f9e6a; --warn: #c98a1b; --bad: #d4493f;
+  --shadow: 0 1px 0 rgb(17 17 19 / 0.03), 0 1px 2px rgb(17 17 19 / 0.04), 0 8px 24px -12px rgb(17 17 19 / 0.10);
+  --radius: 14px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0b0c; --bg-elev: #141416; --surface: rgb(22 22 24 / 0.72);
+    --fg: #ededef; --fg-2: #a1a1a8; --fg-3: #6b6b72;
+    --line: rgb(255 255 255 / 0.07); --line-strong: rgb(255 255 255 / 0.13); --fill: rgb(255 255 255 / 0.04);
+    --accent: #8f97ff; --accent-soft: rgb(143 151 255 / 0.12);
+    --shadow: 0 0 0 1px rgb(255 255 255 / 0.02), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b0b0c; --bg-elev: #141416; --surface: rgb(22 22 24 / 0.72);
+  --fg: #ededef; --fg-2: #a1a1a8; --fg-3: #6b6b72;
+  --line: rgb(255 255 255 / 0.07); --line-strong: rgb(255 255 255 / 0.13); --fill: rgb(255 255 255 / 0.04);
+  --accent: #8f97ff; --accent-soft: rgb(143 151 255 / 0.12);
+  --shadow: 0 0 0 1px rgb(255 255 255 / 0.02), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg); --color-elev: var(--bg-elev); --color-fg: var(--fg); --color-fg-2: var(--fg-2); --color-fg-3: var(--fg-3);
+  --color-line: var(--line); --color-fill: var(--fill); --color-accent: var(--accent); --color-accent-soft: var(--accent-soft);
+  --color-ok: var(--ok); --color-warn: var(--warn); --color-bad: var(--bad);
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+html, body { background: var(--bg); color: var(--fg); }
+body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; font-feature-settings: "ss01", "cv11"; }
+::selection { background: var(--accent-soft); }
+
+.card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.glass { background: var(--surface); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); }
+.eyebrow { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); font-weight: 500; }
+.tnum { font-variant-numeric: tabular-nums; }
+
+.press { transition: transform 160ms var(--ease), background-color 160ms var(--ease), border-color 160ms var(--ease); }
+.press:active { transform: scale(0.98); }
+.rise { animation: rise 520ms var(--ease) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
