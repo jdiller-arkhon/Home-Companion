@@ -1,5 +1,5 @@
 import { requireUser } from "@/server/auth";
-import { listDocs, searchDocs, folders, type Doc } from "@/server/vault";
+import { listDocs, smartSearch, folders, type Doc } from "@/server/vault";
 import { getSettings } from "@/server/settings";
 import { todayIn, DAY } from "@/lib/time";
 import { PageHeader, inputCls } from "@/components/ui";
@@ -19,11 +19,11 @@ export default async function Vault({ searchParams }: { searchParams: Promise<{ 
     expiringSoon: !!d.expires_at && d.expires_at - today < 60 * DAY, text: STATUS[d.text_status], snippet,
   });
   const fs = folders(user.id);
-  const rows = q ? searchDocs(user.id, q, 30).map((h) => toRow(h.doc, h.snippet || undefined)) : listDocs(user.id, { folder: tab && tab !== "all" ? tab : undefined }).map((d) => toRow(d));
+  const rows = q ? (await smartSearch(user.id, q, 30)).map((h) => toRow(h.doc, h.snippet || undefined)) : listDocs(user.id, { folder: tab && tab !== "all" ? tab : undefined }).map((d) => toRow(d));
   return (
     <div className="mx-auto max-w-[980px] px-5 md:px-10 pt-10 md:pt-14 pb-12">
       <PageHeader title="Vault" subtitle="Encrypted documents. Private unless you share them."><VaultUpload /></PageHeader>
-      <form className="rise mt-6"><input name="q" defaultValue={q} placeholder="Search names and document text…" className={inputCls} /></form>
+      <form className="rise mt-6"><input name="q" defaultValue={q} placeholder="Search by meaning — “dishwasher receipt”, “when does the policy renew”…" className={inputCls} /></form>
       {!q && <Tabs base="/vault" active={tab ?? "all"} tabs={[{ key: "all", label: "All" }, ...fs.map((f) => ({ key: f, label: f }))]} />}
       <div className="mt-6">{q && <p className="mb-3 text-[13px] text-fg-3">{rows.length} result{rows.length === 1 ? "" : "s"} for “{q}”</p>}<VaultList docs={rows} /></div>
     </div>

@@ -6,6 +6,7 @@ import { env } from "./env";
 import { newId } from "./ids";
 import { decryptBuffer, decryptString, encryptBuffer, encryptString } from "./crypto";
 import { log } from "./log";
+import { indexDocument, semanticSearch } from "./semantic";
 
 /**
  * Private document vault. Files are AES-256-GCM encrypted at rest with a
@@ -35,7 +36,7 @@ export function getDoc(viewerId: string, id: string): (Doc & { text: string | nu
   return { ...toDoc(r), text: r.text_enc ? decryptString(r.text_enc, "vault-text") : null };
 }
 
-export async function storeDoc(ownerId: string, file: { name: string; type: string; bytes: Buffer }, meta: { folder?: string; visibility?: "shared" | "private"; expiresAt?: number | null; tags?: string[] }) {
+export async function storeDoc(ownerId: string, file: { name: string; type: string; bytes: Buffer }, meta: { folder?: string; visibility?: "shared" | "private"; expiresAt?: number | null; tags?: string[]; awaitText?: boolean }) {
   if (file.bytes.length > MAX_UPLOAD) throw new Error("File is larger than 25 MB");
   const mime = file.type || "application/octet-stream";
   if (!ALLOWED.test(mime)) throw new Error("Unsupported file type. Upload PDF, image or text files.");
@@ -48,7 +49,8 @@ export async function storeDoc(ownerId: string, file: { name: string; type: stri
       crypto.createHash("sha256").update(file.bytes).digest("hex"),
       isText ? encryptString(file.bytes.toString("utf8").slice(0, 500_000), "vault-text") : null,
       isText ? "done" : "pending", meta.expiresAt ?? null, JSON.stringify(meta.tags ?? []), Date.now());
-  if (!isText) void extractText(id, mime, file.bytes);
+  if (!isText) { const p = extractText(id, mime, file.bytes); if (meta.awaitText) await p; else void p; }
+  else void indexDocument(id, file.bytes.toString("utf8").slice(0, 500_000));
   return id;
 }
 
@@ -62,6 +64,7 @@ async function extractText(id: string, mime: string, bytes: Buffer) {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const { text } = (await r.json()) as { text: string };
     setText(id, text, "done");
+    void indexDocument(id, text);
   } catch (e) {
     log.warn("vault.extract_failed", { id, error: String(e) });
     setText(id, null, "failed");
@@ -122,6 +125,25 @@ export function searchDocs(viewerId: string, query: string, limit = 10): SearchH
     hits.push({ doc: toDoc(r), score, snippet: text ? text.slice(Math.max(0, i - 80), i + 220).replace(/\s+/g, " ") : "" });
   }
   return hits.sort((a, b) => b.score - a.score).slice(0, limit);
+}
+
+/** Keyword + semantic ("find the dishwasher receipt") search, merged by document. */
+export async function smartSearch(viewerId: string, query: string, limit = 10): Promise<SearchHit[]> {
+  const keyword = searchDocs(viewerId, query, limit * 2);
+  const semantic = await semanticSearch(viewerId, query, limit * 2);
+  if (!semantic) return keyword.slice(0, limit);
+  const merged = new Map<string, SearchHit>();
+  const maxK = Math.max(1, ...keyword.map((k) => k.score));
+  for (const k of keyword) merged.set(k.doc.id, { ...k, score: (k.score / maxK) * 0.5 });
+  for (const s of semantic) {
+    const prev = merged.get(s.docId);
+    if (prev) prev.score += s.score;
+    else {
+      const d = getDoc(viewerId, s.docId);
+      if (d) { const { text: _t, ...doc } = d; merged.set(s.docId, { doc, snippet: s.snippet, score: s.score }); }
+    }
+  }
+  return [...merged.values()].sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
 export function folders(viewerId: string): string[] {

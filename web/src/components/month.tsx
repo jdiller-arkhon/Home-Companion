@@ -3,10 +3,11 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import clsx from "clsx";
 import { requireUser } from "@/server/auth";
 import { listItems } from "@/server/items/repo";
+import { externalOccurrences } from "@/server/calendar";
 import { getSettings } from "@/server/settings";
 import { DAY, todayIn, tzOffset } from "@/lib/time";
 
-const DOT: Record<string, string> = { event: "bg-accent", task: "bg-fg", chore: "bg-fg-2", occasion: "bg-ok", maintenance: "bg-fg-3", errand: "bg-fg-2", meal: "bg-fg-3" };
+const DOT: Record<string, string> = { external: "bg-accent/50", external_allday: "bg-accent/50", event: "bg-accent", task: "bg-fg", chore: "bg-fg-2", occasion: "bg-ok", maintenance: "bg-fg-3", errand: "bg-fg-2", meal: "bg-fg-3" };
 
 /** Month grid of everything dated: events, tasks, chores, occasions (yearly), upkeep. */
 export async function MonthView({ month }: { month?: string }) {
@@ -31,6 +32,7 @@ export async function MonthView({ month }: { month?: string }) {
   const byDay = new Map<number, { title: string; kind: string; href: string }[]>();
   const add = (day: number, e: { title: string; kind: string; href: string }) => byDay.set(day, [...(byDay.get(day) ?? []), e]);
   for (const i of items) add(localDay(i.due_at!, i.kind === "event"), { title: i.title, kind: i.kind, href: i.kind === "maintenance" ? "/maintenance" : `/planner?tab=${i.kind === "event" ? "agenda" : i.kind === "meal" ? "meals" : i.kind === "chore" ? "chores" : "tasks"}` });
+  for (const x of externalOccurrences(user.id, gridStart, gridStart + 42 * DAY)) add(localDay(x.due_at!, x.kind === "external"), { title: x.title, kind: x.kind, href: "/settings#calendars" });
   for (const o of listItems(user.id, { kind: "occasion" })) {
     const d = new Date(o.due_at!);
     for (const yr of [y - 1, y, y + 1]) add(Date.UTC(yr, d.getUTCMonth(), d.getUTCDate()), { title: o.title, kind: "occasion", href: "/planner?tab=occasions" });

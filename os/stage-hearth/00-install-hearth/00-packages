@@ -1,0 +1,7 @@
+curl
+ca-certificates
+git
+cage
+chromium-browser
+seatd
+openssl

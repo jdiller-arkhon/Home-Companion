@@ -1,5 +1,6 @@
 import { listItems, type Item } from "./items/repo";
 import { getSettings } from "./settings";
+import { externalOccurrences } from "./calendar";
 import { DAY, todayIn } from "@/lib/time";
 import { getWeather, describeWeather } from "./integrations/weather";
 import { haConfigured, listDevices, type Device } from "./integrations/homeassistant";
@@ -39,7 +40,7 @@ export async function snapshot(viewerId: string) {
 
   return {
     today, tz: s.timezone, household: s.household_name,
-    events: by("event").filter((e) => e.due_at! >= today),
+    events: [...by("event").filter((e) => e.due_at! >= today), ...externalOccurrences(viewerId, today, horizon)].sort((a, b) => a.due_at! - b.due_at!),
     tasks: by(["task", "chore", "errand"]),
     maintenance: by(["maintenance", "vehicle"]),
     overdue, occasions, lowStock, packages, warranties,

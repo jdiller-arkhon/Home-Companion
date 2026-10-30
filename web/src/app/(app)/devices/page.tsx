@@ -45,7 +45,7 @@ export default async function Devices({ searchParams }: { searchParams: Promise<
             <div className="mt-6">
               {tab === "routines" ? (
                 <Routines entities={devices!.map((d) => ({ id: d.id, name: d.name, domain: d.domain }))}
-                  routines={listRoutines().map((r) => ({ id: r.id, name: r.name, time: r.time, days: r.days, presence: r.presence, actions: r.actions, enabled: r.enabled, last: r.last_result }))} />
+                  routines={listRoutines().map((r) => ({ id: r.id, name: r.name, trigger: r.trigger, after_dark: r.after_dark, time: r.time, days: r.days, presence: r.presence, actions: r.actions, enabled: r.enabled, last: r.last_result }))} />
               ) : tab === "plan" ? <FloorPlan plan={getFloorPlan()} devices={devices!} /> : <DeviceGrid devices={devices!} />}
             </div>
           </>

@@ -7,7 +7,7 @@ import { saveRoutineAction, toggleRoutine, removeRoutine, runNow } from "@/serve
 import { Sheet, Button, inputCls } from "./ui";
 
 type A = { entity_id: string; action: string; value?: number };
-export type RoutineRow = { id: string; name: string; time: string; days: number[]; presence: "any" | "home" | "away"; actions: A[]; enabled: boolean; last: string | null };
+export type RoutineRow = { id: string; name: string; trigger: "time" | "last_leaves" | "first_arrives"; after_dark: boolean; time: string; days: number[]; presence: "any" | "home" | "away"; actions: A[]; enabled: boolean; last: string | null };
 export type Entity = { id: string; name: string; domain: string };
 
 const DAYS = ["S", "M", "T", "W", "T", "F", "S"];
@@ -22,6 +22,8 @@ function Editor({ initial, entities, onDone }: { initial?: RoutineRow; entities:
   const usable = entities.filter((e) => ACTIONS[e.domain]);
   const [name, setName] = useState(initial?.name ?? "");
   const [time, setTime] = useState(initial?.time ?? "22:30");
+  const [trigger, setTrigger] = useState<RoutineRow["trigger"]>(initial?.trigger ?? "time");
+  const [afterDark, setAfterDark] = useState(initial?.after_dark ?? false);
   const [days, setDays] = useState<number[]>(initial?.days ?? [0, 1, 2, 3, 4, 5, 6]);
   const [presence, setPresence] = useState(initial?.presence ?? "any");
   const [actions, setActions] = useState<A[]>(initial?.actions ?? []);
@@ -31,13 +33,18 @@ function Editor({ initial, entities, onDone }: { initial?: RoutineRow; entities:
   return (
     <div className="space-y-4">
       <label className="block"><span className="text-[12px] text-fg-2">Name</span><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Goodnight" className={`${inputCls} mt-1.5`} /></label>
-      <div className="grid grid-cols-2 gap-3">
+      <label className="block"><span className="text-[12px] text-fg-2">When</span>
+        <select value={trigger} onChange={(e) => setTrigger(e.target.value as RoutineRow["trigger"])} className={`${inputCls} mt-1.5`}>
+          <option value="time">At a time</option><option value="last_leaves">When the last person leaves</option><option value="first_arrives">When the first person gets home</option>
+        </select></label>
+      {trigger !== "time" && <label className="flex items-center gap-2.5 text-[13px] text-fg-2"><input type="checkbox" checked={afterDark} onChange={(e) => setAfterDark(e.target.checked)} className="size-4 accent-[var(--fg)]" />Only after sunset</label>}
+      {trigger === "time" && <div className="grid grid-cols-2 gap-3">
         <label className="block"><span className="text-[12px] text-fg-2">Time</span><input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={`${inputCls} mt-1.5`} /></label>
         <label className="block"><span className="text-[12px] text-fg-2">Only when</span>
           <select value={presence} onChange={(e) => setPresence(e.target.value as RoutineRow["presence"])} className={`${inputCls} mt-1.5`}>
             <option value="any">Always</option><option value="home">Someone is home</option><option value="away">Nobody is home</option>
           </select></label>
-      </div>
+      </div>}
       <div className="flex gap-1.5" role="group" aria-label="Days">
         {DAYS.map((d, i) => (
           <button key={i} type="button" aria-pressed={days.includes(i)} onClick={() => setDays(days.includes(i) ? days.filter((x) => x !== i) : [...days, i])}
@@ -60,7 +67,7 @@ function Editor({ initial, entities, onDone }: { initial?: RoutineRow; entities:
       </div>
       {error && <p role="alert" className="text-[13px] text-bad">{error}</p>}
       <Button className="w-full" disabled={pending} onClick={() => start(async () => {
-        const r = await saveRoutineAction({ name, time, days, presence, actions }, initial?.id);
+        const r = await saveRoutineAction({ name, trigger, after_dark: afterDark, time, days, presence: trigger === "time" ? presence : "any", actions }, initial?.id);
         if (r.error) setError(r.error); else onDone();
       })}>{pending ? "Saving…" : "Save routine"}</Button>
     </div>
@@ -76,13 +83,13 @@ export function Routines({ routines, entities }: { routines: RoutineRow[]; entit
       <div className="flex items-center"><p className="text-[13px] text-fg-3">Scheduled scenes and checks that run on their own.</p><Button variant="secondary" className="ml-auto" onClick={() => setEdit("new")}><Plus size={14} />New routine</Button></div>
       {msg && <p className="mt-3 text-[13px] text-fg-2" role="status">{msg}</p>}
       {routines.length === 0 ? (
-        <button onClick={() => setEdit("new")} className="press mt-4 w-full rounded-[var(--radius)] border border-dashed border-line py-10 text-[13px] text-fg-3 hover:text-fg">Try “Goodnight”: lock the doors, turn off the lights and set the heat to 66° at 10:30 PM.</button>
+        <button onClick={() => setEdit("new")} className="press mt-4 w-full rounded-[var(--radius)] border border-dashed border-line py-10 text-[13px] text-fg-3 hover:text-fg">Try “Goodnight” at 10:30 PM, or “Leaving” when the last of you heads out: lights off, doors locked, heat down.</button>
       ) : (
         <ul className="card mt-4 divide-y divide-line">{routines.map((r) => (
           <li key={r.id} className="flex items-center gap-4 px-4 py-3">
             <button onClick={() => setEdit(r)} className="min-w-0 flex-1 text-left">
-              <div className="flex items-baseline gap-2"><span className="tnum text-[17px] font-semibold tracking-tight">{r.time}</span><span className="truncate text-[14px]">{r.name}</span></div>
-              <div className="truncate text-[12px] text-fg-3">{daysLabel(r.days)} · {r.actions.length} action{r.actions.length > 1 ? "s" : ""}{r.presence !== "any" ? ` · only when ${r.presence === "home" ? "someone's home" : "nobody's home"}` : ""}{r.last ? ` · last: ${r.last}` : ""}</div>
+              <div className="flex items-baseline gap-2"><span className="tnum text-[17px] font-semibold tracking-tight">{r.trigger === "time" ? r.time : r.trigger === "last_leaves" ? "Leaving" : "Arriving"}</span><span className="truncate text-[14px]">{r.name}</span></div>
+              <div className="truncate text-[12px] text-fg-3">{daysLabel(r.days)}{r.after_dark ? " · after sunset" : ""} · {r.actions.length} action{r.actions.length > 1 ? "s" : ""}{r.presence !== "any" ? ` · only when ${r.presence === "home" ? "someone's home" : "nobody's home"}` : ""}{r.last ? ` · last: ${r.last}` : ""}</div>
             </button>
             <button aria-label={`Run ${r.name} now`} onClick={() => start(async () => setMsg(await runNow(r.id)))} className="text-fg-3 hover:text-fg"><Play size={15} /></button>
             <Switch.Root checked={r.enabled} onCheckedChange={(v) => start(() => toggleRoutine(r.id, v))} aria-label={`${r.name} enabled`} className="relative h-6 w-10 rounded-full bg-fill transition data-[state=checked]:bg-ok" style={{ border: "1px solid var(--line)" }}>

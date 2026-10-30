@@ -165,4 +165,46 @@ export const migrations: { version: number; name: string; sql: string }[] = [
       );
     `,
   },
+  {
+    version: 3,
+    name: "tokens_calendars_presence_embeddings",
+    sql: `
+      -- Long-lived scoped tokens: calendar feeds, Siri Shortcuts, house-sitter shares.
+      CREATE TABLE api_tokens (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        kind TEXT NOT NULL CHECK (kind IN ('calendar','shortcut','share')),
+        name TEXT NOT NULL,
+        token_hash TEXT NOT NULL UNIQUE,
+        expires_at INTEGER,
+        last_used_at INTEGER,
+        created_at INTEGER NOT NULL
+      );
+
+      CREATE TABLE external_calendars (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        url_enc TEXT NOT NULL,        -- private iCal URLs are secrets
+        color TEXT NOT NULL DEFAULT 'accent',
+        shared INTEGER NOT NULL DEFAULT 0,
+        last_sync INTEGER,
+        last_error TEXT,
+        events TEXT NOT NULL DEFAULT '[]',
+        created_at INTEGER NOT NULL
+      );
+
+      ALTER TABLE routines ADD COLUMN trigger TEXT NOT NULL DEFAULT 'time';
+      ALTER TABLE routines ADD COLUMN after_dark INTEGER NOT NULL DEFAULT 0;
+
+      -- Semantic search over vault text (embeddings from a local model).
+      CREATE TABLE doc_chunks (
+        doc_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+        idx INTEGER NOT NULL,
+        text_enc TEXT NOT NULL,
+        embedding BLOB NOT NULL,
+        PRIMARY KEY (doc_id, idx)
+      );
+    `,
+  },
 ];

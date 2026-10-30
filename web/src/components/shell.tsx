@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Sparkles, Lightbulb, CalendarDays, Wrench, Lock, Package, Activity, Settings } from "lucide-react";
+import { Home, Sparkles, Lightbulb, CalendarDays, MonitorSmartphone, Siren, BarChart3, Wrench, Lock, Package, Activity, Settings } from "lucide-react";
 import clsx from "clsx";
 import { NotificationBell } from "./notifications";
 
@@ -13,6 +13,8 @@ const NAV = [
   { href: "/maintenance", label: "Upkeep", icon: Wrench },
   { href: "/vault", label: "Vault", icon: Lock },
   { href: "/packages", label: "Packages", icon: Package },
+  { href: "/emergency", label: "Emergency", icon: Siren },
+  { href: "/report", label: "Year in review", icon: BarChart3 },
   { href: "/system", label: "System", icon: Activity },
 ];
 const MOBILE = ["/", "/assistant", "/devices", "/planner", "/maintenance"];
@@ -43,6 +45,7 @@ export function Shell({ user, household, children, notifications }: { user: { na
           <NotificationBell {...notifications} />
           <Link href="/settings" aria-label="Settings" className="text-fg-3 hover:text-fg"><Settings size={16} strokeWidth={1.75} /></Link>
         </div>
+        <Link href="/display" className="mt-1 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-fg-3 hover:bg-fill hover:text-fg"><MonitorSmartphone size={15} strokeWidth={1.75} />Display mode</Link>
       </aside>
       <main className="pb-24 md:pb-0">
         <div className="md:hidden flex items-center justify-end gap-3 px-5 pt-[max(env(safe-area-inset-top),12px)]">

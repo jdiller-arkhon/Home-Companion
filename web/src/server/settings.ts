@@ -22,6 +22,7 @@ export type HouseholdSettings = {
   evening_recap: boolean;
   assistant_name: string;
   assistant_voice: string;
+  kiosk_motion_entity: string;
 };
 
 const DEFAULTS: HouseholdSettings = {
@@ -44,6 +45,7 @@ const DEFAULTS: HouseholdSettings = {
   evening_recap: false,
   assistant_name: "Hearth",
   assistant_voice: "en_US-amy-medium",
+  kiosk_motion_entity: "",
 };
 
 export function getSettings(): HouseholdSettings {

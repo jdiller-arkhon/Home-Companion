@@ -2,7 +2,7 @@ import "server-only";
 import { listItems, toFormValues, type Item, type ListOptions } from "./items/repo";
 import { kindDef } from "./items/kinds";
 import { getSettings } from "./settings";
-import { listUsers } from "./users";
+import { listUsers, getUser } from "./users";
 import { trackingUrl } from "@/lib/tracking";
 import { formatMoney, relativeDay, todayIn, DAY } from "@/lib/time";
 import type { RecordRow, Person } from "@/components/records";
@@ -24,7 +24,7 @@ export function toRows(viewerId: string, items: Item[]): RecordRow[] {
     }
     const meta: string[] = [];
     for (const k of ["assignee", "carrier", "tracking", "location", "brand", "model", "aisle", "quantity", "slot", "asset", "vendor", "type", "merchant"]) {
-      if (i.data[k]) meta.push(String(i.data[k]));
+      if (i.data[k] && !(k === "aisle" && i.kind === "grocery")) meta.push(String(i.data[k]));
     }
     if (i.kind === "consumable") meta.push(`${i.data.stock ?? 0} in stock`);
     if (i.kind === "goal" && i.data.progress != null) meta.push(`${i.data.progress}%`);
@@ -35,12 +35,31 @@ export function toRows(viewerId: string, items: Item[]): RecordRow[] {
       amount: i.amount_cents != null ? formatMoney(i.amount_cents, s.currency) : null, meta,
       recurring: rec !== "none" && rec !== "", url: i.kind === "package" ? trackingUrl(i.data.carrier as string | undefined, i.data.tracking as string | undefined) : typeof i.data.url === "string" ? i.data.url : typeof i.data.manual_url === "string" ? i.data.manual_url : null,
       form: toFormValues(i, s.timezone),
+      group: i.kind === "grocery" ? String(i.data.aisle ?? "Other") : undefined,
+      doneBy: def.doneStatus && i.status === def.doneStatus ? doneByName(i) : undefined,
     };
   });
 }
 
+const names = new Map<string, string>();
+function doneByName(i: Item): string | undefined {
+  const by = (i.data.history as { by?: string }[] | undefined)?.[0]?.by;
+  if (!by) return undefined;
+  if (!names.has(by)) names.set(by, getUser(by)?.name ?? "");
+  return names.get(by) || undefined;
+}
+
+const AISLE_ORDER = ["Produce", "Bakery", "Dairy", "Meat & Fish", "Pantry", "Frozen", "Household", "Other"];
+
 export function rowsFor(viewerId: string, kind: string, opts: ListOptions = {}) {
-  return toRows(viewerId, listItems(viewerId, { kind, ...opts }));
+  let items = listItems(viewerId, { kind, ...opts });
+  if (kind === "grocery") {
+    // Show the open list plus things checked off in the last 12 hours, grouped by store section.
+    const cutoff = Date.now() - 12 * 3_600_000;
+    items = items.filter((i) => i.status === "open" || i.updated_at > cutoff)
+      .sort((a, b) => AISLE_ORDER.indexOf(String(a.data.aisle ?? "Other")) - AISLE_ORDER.indexOf(String(b.data.aisle ?? "Other")) || (a.status === "open" ? -1 : 1) - (b.status === "open" ? -1 : 1));
+  }
+  return toRows(viewerId, items);
 }
 
 export function people(): Person[] {

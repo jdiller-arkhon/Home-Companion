@@ -1,16 +1,20 @@
 "use client";
-import { startTransition, useActionState, useEffect, useState, useTransition } from "react";
+import React, { startTransition, useActionState, useEffect, useState, useTransition } from "react";
 import { Check, Plus, Trash2, Lock, Repeat, ExternalLink } from "lucide-react";
 import clsx from "clsx";
 import { KINDS, statusLabel, type Field } from "@/server/items/kinds";
 import { saveItem, completeAction, deleteAction, statusAction, type ItemFormState } from "@/server/item-actions";
 import { Sheet, Button, inputCls, Pill } from "./ui";
 import { ElevateDialog } from "./elevate";
+import { sendRecipeToGroceries } from "@/server/meal-actions";
+import { nudge } from "@/server/nudge-actions";
+import { ShoppingBasket, BellRing } from "lucide-react";
 
 export type RecordRow = {
   id: string; kind: string; title: string; status: string; visibility: "shared" | "private"; mine: boolean;
   dueLabel: string | null; dueTone: "neutral" | "warn" | "bad"; amount: string | null; meta: string[];
   recurring: boolean; url: string | null; form: Record<string, string | boolean>;
+  group?: string; doneBy?: string;
 };
 export type Person = { id: string; name: string };
 
@@ -72,6 +76,7 @@ export function RecordBoard({ kind, rows, people, emptyText }: { kind: string; r
   const def = KINDS[kind];
   const [editing, setEditing] = useState<RecordRow | "new" | null>(null);
   const [elevateFor, setElevateFor] = useState<string | null>(null);
+  const [note, setNote] = useState<string>();
   const [, start] = useTransition();
   const canComplete = !!def.doneStatus;
 
@@ -88,12 +93,14 @@ export function RecordBoard({ kind, rows, people, emptyText }: { kind: string; r
         <span className="ml-2 text-[13px] text-fg-3 tnum">{rows.length || ""}</span>
         <Button variant="secondary" className="ml-auto" onClick={() => setEditing("new")}><Plus size={14} /> Add</Button>
       </div>
+      {note && <p className="mb-3 text-[13px] text-fg-2" role="status">{note}</p>}
       {rows.length === 0 ? (
         <button onClick={() => setEditing("new")} className="press w-full rounded-[var(--radius)] border border-dashed border-line py-10 text-[13px] text-fg-3 hover:text-fg hover:border-fg-3">{emptyText}</button>
       ) : (
         <ul className="card divide-y divide-line overflow-hidden">
-          {rows.map((r) => (
-            <li key={r.id} className="group flex items-center gap-3 px-4 py-3 hover:bg-fill/60">
+          {rows.map((r, i) => (<React.Fragment key={r.id}>
+            {r.group && r.group !== rows[i - 1]?.group && <li className="eyebrow bg-fill/50 px-4 py-1.5">{r.group}</li>}
+            <li className="group flex items-center gap-3 px-4 py-3 hover:bg-fill/60">
               {canComplete && r.status !== def.doneStatus && (
                 <button onClick={() => start(() => completeAction(r.id))} aria-label={`${completeLabel(kind)}: ${r.title}`} title={completeLabel(kind)}
                   className="press grid size-5 shrink-0 place-items-center rounded-full border border-line-strong text-transparent hover:border-ok hover:text-ok" style={{ borderColor: "var(--line-strong)" }}>
@@ -116,12 +123,19 @@ export function RecordBoard({ kind, rows, people, emptyText }: { kind: string; r
               ) : r.status !== def.statuses[0] && <Pill>{statusLabel(r.status)}</Pill>}
               {r.dueLabel && <Pill tone={r.dueTone}>{r.dueLabel}</Pill>}
               {r.amount && <span className="tnum text-[14px] font-medium">{r.amount}</span>}
+              {r.doneBy && <span className="text-[12px] text-fg-3">✓ {r.doneBy}</span>}
+              {["task", "chore", "errand"].includes(kind) && r.status === "open" && (
+                <button onClick={() => start(async () => setNote(await nudge(r.id)))} aria-label={`Ask the household about ${r.title}`} title="Ask the household" className="text-fg-3 opacity-0 transition group-hover:opacity-100 hover:text-accent focus:opacity-100"><BellRing size={14} /></button>
+              )}
             </li>
-          ))}
+          </React.Fragment>))}
         </ul>
       )}
       <Sheet open={!!editing} onOpenChange={(o) => !o && setEditing(null)} title={editing === "new" ? `New ${def.label.toLowerCase()}` : def.label}>
         {editing && <RecordForm kind={kind} row={editing === "new" ? undefined : editing} people={people} onSaved={() => setEditing(null)} />}
+        {editing && editing !== "new" && kind === "recipe" && (
+          <Button variant="secondary" className="mt-3 w-full" onClick={() => start(async () => { setNote(await sendRecipeToGroceries(editing.id)); setEditing(null); })}><ShoppingBasket size={14} /> Send ingredients to groceries</Button>
+        )}
         {editing && editing !== "new" && (
           <Button variant="danger" className="mt-3 w-full" onClick={() => remove(editing.id)}><Trash2 size={14} /> Delete</Button>
         )}

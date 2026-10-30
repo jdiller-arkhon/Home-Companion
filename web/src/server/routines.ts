@@ -20,6 +20,8 @@ export const Action = z.object({
 });
 export const RoutineInput = z.object({
   name: z.string().trim().min(1).max(60),
+  trigger: z.enum(["time", "last_leaves", "first_arrives"]).default("time"),
+  after_dark: z.boolean().default(false),
   time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   days: z.array(z.number().int().min(0).max(6)).min(1),
   presence: z.enum(["any", "home", "away"]),
@@ -41,8 +43,8 @@ export function validateActions(actions: z.infer<typeof Action>[]) {
   }
 }
 
-type Row = Omit<Routine, "days" | "actions" | "enabled"> & { days: string; actions: string; enabled: number };
-const toRoutine = (r: Row): Routine => ({ ...r, enabled: !!r.enabled, days: JSON.parse(r.days), actions: JSON.parse(r.actions) });
+type Row = Omit<Routine, "days" | "actions" | "enabled" | "after_dark"> & { days: string; actions: string; enabled: number; after_dark: number };
+const toRoutine = (r: Row): Routine => ({ ...r, enabled: !!r.enabled, after_dark: !!r.after_dark, days: JSON.parse(r.days), actions: JSON.parse(r.actions) });
 
 export function listRoutines(): Routine[] {
   return (db().prepare("SELECT * FROM routines ORDER BY time").all() as Row[]).map(toRoutine);
@@ -52,11 +54,11 @@ export function saveRoutine(ownerId: string, input: unknown, id?: string): Routi
   const r = RoutineInput.parse(input);
   validateActions(r.actions);
   if (id) {
-    db().prepare("UPDATE routines SET name=?, time=?, days=?, presence=?, actions=? WHERE id=?").run(r.name, r.time, JSON.stringify(r.days), r.presence, JSON.stringify(r.actions), id);
+    db().prepare("UPDATE routines SET name=?, trigger=?, after_dark=?, time=?, days=?, presence=?, actions=? WHERE id=?").run(r.name, r.trigger, r.after_dark ? 1 : 0, r.time, JSON.stringify(r.days), r.presence, JSON.stringify(r.actions), id);
   } else {
     id = newId();
-    db().prepare("INSERT INTO routines (id,owner_id,name,enabled,time,days,presence,actions,created_at) VALUES (?,?,?,?,?,?,?,?,?)")
-      .run(id, ownerId, r.name, 1, r.time, JSON.stringify(r.days), r.presence, JSON.stringify(r.actions), Date.now());
+    db().prepare("INSERT INTO routines (id,owner_id,name,enabled,trigger,after_dark,time,days,presence,actions,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+      .run(id, ownerId, r.name, 1, r.trigger, r.after_dark ? 1 : 0, r.time, JSON.stringify(r.days), r.presence, JSON.stringify(r.actions), Date.now());
   }
   return toRoutine(db().prepare("SELECT * FROM routines WHERE id=?").get(id) as Row);
 }
@@ -64,14 +66,24 @@ export function saveRoutine(ownerId: string, input: unknown, id?: string): Routi
 export function setEnabled(id: string, enabled: boolean) { db().prepare("UPDATE routines SET enabled=? WHERE id=?").run(enabled ? 1 : 0, id); }
 export function deleteRoutine(id: string) { db().prepare("DELETE FROM routines WHERE id=?").run(id); }
 
+async function homeState(): Promise<{ home: number | null; dark: boolean | null }> {
+  const devices = await listDevices();
+  const people = devices.filter((d) => d.domain === "person");
+  const sun = devices.find((d) => d.id === "sun.sun");
+  return { home: people.length ? people.filter((p) => p.state === "home").length : null, dark: sun ? sun.state === "below_horizon" : null };
+}
+
 async function someoneHome(): Promise<boolean | null> {
-  const people = (await listDevices()).filter((d) => d.domain === "person");
-  if (!people.length) return null;
-  return people.some((p) => p.state === "home");
+  const { home } = await homeState();
+  return home === null ? null : home > 0;
 }
 
 export async function runRoutine(r: Routine, actorId: string | null, reason: "schedule" | "manual", at = Date.now()): Promise<string> {
   validateActions(r.actions); // re-check in case rules tightened since saving
+  if (r.after_dark && reason === "schedule") {
+    const { dark } = await homeState();
+    if (dark === false) return record(r, actorId, "skipped", "It wasn't dark yet.", reason, at);
+  }
   if (r.presence !== "any") {
     const home = await someoneHome();
     if (home === null) return record(r, actorId, "skipped", "No person entities in Home Assistant to check presence.", reason, at);
@@ -98,16 +110,34 @@ function record(r: Routine, actorId: string | null, outcome: "ok" | "failed" | "
   return msg;
 }
 
-/** Called every minute. Fires routines whose HH:MM matches the current household time. */
+declare global {
+  // eslint-disable-next-line no-var
+  var __hearthHomeCount: number | null | undefined;
+}
+
+/**
+ * Called every minute. Fires time routines whose HH:MM matches household
+ * time, and presence routines on transitions (everyone gone / first home).
+ */
 export async function tickRoutines(now = Date.now()) {
   if (!haConfigured()) return 0;
+  const routines = listRoutines().filter((r) => r.enabled);
+  let ran = 0;
+  if (routines.some((r) => r.trigger !== "time")) {
+    const { home } = await homeState().catch(() => ({ home: null }));
+    const prev = globalThis.__hearthHomeCount;
+    globalThis.__hearthHomeCount = home;
+    if (home !== null && prev !== undefined && prev !== null && prev !== home) {
+      const event = home === 0 && prev > 0 ? "last_leaves" : prev === 0 && home > 0 ? "first_arrives" : null;
+      for (const r of routines.filter((x) => x.trigger === event)) { await runRoutine(r, null, "schedule", now); ran++; }
+    }
+  }
   const tz = getSettings().timezone;
   const local = new Date(now + tzOffset(now, tz));
   const hhmm = local.toISOString().slice(11, 16);
   const dow = local.getUTCDay();
-  let ran = 0;
-  for (const r of listRoutines()) {
-    if (!r.enabled || r.time !== hhmm || !r.days.includes(dow)) continue;
+  for (const r of routines) {
+    if (r.trigger !== "time" || r.time !== hhmm || !r.days.includes(dow)) continue;
     if (r.last_run && now - r.last_run < 90_000) continue; // never double-fire within the same minute
     await runRoutine(r, null, "schedule", now);
     ran++;

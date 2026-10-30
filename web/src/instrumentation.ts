@@ -5,6 +5,9 @@ export async function register() {
   const { log } = await import("./server/log");
   const { sweepReminders } = await import("./server/reminders");
   const { tickRoutines } = await import("./server/routines");
+  const { syncExternal } = await import("./server/calendar");
+  void syncExternal().catch(() => {});
+  setInterval(() => void syncExternal().catch((e) => log.error("calendar.sync", { error: String(e) })), 30 * 60_000).unref();
   setInterval(async () => {
     try { await tickRoutines(); } catch (e) { log.error("routines.failed", { error: String(e) }); }
   }, 60_000).unref();

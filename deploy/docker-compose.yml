@@ -26,6 +26,8 @@ services:
       - ../data/web:/data
       - ../data/backups:/data/backups
       - /sys/class/thermal:/sys/class/thermal:ro
+    # Loopback only: lets the Pi's own touchscreen reach Hearth directly. Not reachable from the network.
+    ports: ["127.0.0.1:3000:3000"]
     mem_limit: 768m
 
   brain:

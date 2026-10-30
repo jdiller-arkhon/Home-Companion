@@ -100,6 +100,75 @@ test.describe.serial("household flows", () => {
     await expect(page.getByRole("button", { name: /Notifications/ }).first()).toBeVisible();
   });
 
+  test("Siri shortcut key adds groceries; calendar feed exports items", async ({ request }) => {
+    await page.goto("/settings");
+    const siri = page.locator("section", { hasText: "Siri & Shortcuts" });
+    await siri.getByLabel("Name").fill("Test iPhone");
+    await siri.getByRole("button", { name: "Create" }).click();
+    await page.locator("[role=dialog] input[type=password]").fill("correct-horse-battery");
+    await page.locator("[role=dialog] button", { hasText: "Confirm" }).click();
+    const key = await siri.locator("input[readonly]").inputValue();
+    expect(key).toMatch(/^sho_/);
+
+    const add = await request.post("/api/shortcuts", { headers: { Authorization: `Bearer ${key}` }, data: { text: "Add bananas and coffee to the grocery list" } });
+    expect(await add.text()).toBe("Added bananas and coffee to the grocery list.");
+    expect((await request.post("/api/shortcuts", { headers: { Authorization: "Bearer nope" }, data: { text: "hi" } })).status()).toBe(401);
+    const brief = await request.post("/api/shortcuts", { headers: { Authorization: `Bearer ${key}` }, data: { text: "What's my day look like?" } });
+    expect(await brief.text()).toContain("calendar");
+    await page.goto("/planner?tab=groceries");
+    await expect(page.getByText("Bananas")).toBeVisible();
+    await expect(page.getByText("Pantry", { exact: true })).toBeVisible(); // auto store-section
+
+    await page.goto("/settings");
+    const cal = page.locator("#calendars");
+    await cal.getByLabel("Name", { exact: true }).fill("My iPhone");
+    await cal.getByRole("button", { name: "Create" }).click();
+    const feedUrl = await cal.locator("input[readonly]").inputValue();
+    const ics = await (await request.get(new URL(feedUrl).pathname)).text();
+    expect(ics).toContain("BEGIN:VCALENDAR");
+    expect(ics).toContain("Book furnace service");
+    await expect(cal.getByRole("link", { name: "Add to iPhone Calendar" })).toHaveAttribute("href", /^webcal:/);
+  });
+
+  test("emergency card shares read-only and revokes", async ({ browser }) => {
+    await page.goto("/emergency?tab=edit");
+    await page.locator("[name=water_shutoff]").fill("Garage, left wall");
+    await page.locator("[name=plumber]").fill("Ace Plumbing (555) 010-2222");
+    await page.locator("[name=wifi_password]").fill("sunflower-42");
+    await page.locator("[name=share_wifi]").check();
+    await page.getByRole("button", { name: "Save card" }).click();
+    await expect(page.getByRole("status")).toContainText("Saved");
+    await page.goto("/emergency?tab=share");
+    await page.getByLabel("Name").fill("Sitter Pat");
+    await page.getByRole("button", { name: "Create" }).click();
+    const url = await page.locator("input[readonly]").inputValue();
+    const guest = await (await browser.newContext()).newPage();
+    await guest.goto(url);
+    await expect(guest.getByText("Garage, left wall")).toBeVisible();
+    await expect(guest.getByText("sunflower-42")).toBeVisible();
+    await shot(guest, "emergency-shared");
+    await page.getByRole("button", { name: "Revoke Sitter Pat" }).click();
+    await page.waitForTimeout(500);
+    expect((await guest.goto(url))!.status()).toBe(404);
+    await page.goto("/emergency");
+    await shot(page, "emergency");
+  });
+
+  test("display mode, year report, photo capture without AI", async () => {
+    await page.goto("/display");
+    await expect(page.getByText("Up next")).toBeVisible();
+    await shot(page, "display");
+    await page.goto("/report");
+    await expect(page.getByText("Who did what")).toBeVisible();
+    await shot(page, "report");
+    await page.goto("/maintenance?tab=appliances");
+    await page.getByRole("button", { name: "Add from photo" }).click();
+    await page.setInputFiles("[role=dialog] input[type=file]", { name: "label.png", mimeType: "image/png", buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64") });
+    await page.getByRole("button", { name: "Read photo" }).click();
+    await expect(page.getByText(/Saved to the Vault/)).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator("[role=dialog] [name=notes]")).toHaveValue(/Receipts & Manuals/);
+  });
+
   test("iPhone layout", async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, storageState: await page.context().storageState() });
     const p = await ctx.newPage();

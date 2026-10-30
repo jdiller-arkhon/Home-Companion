@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 if ! command -v docker >/dev/null; then
   curl -fsSL https://get.docker.com | sh
   sudo usermod -aG docker "$USER"
-  echo "Docker installed. Log out and back in, then re-run this script."; exit 0
+  if [ -z "${HEARTH_NONINTERACTIVE:-}" ]; then echo "Docker installed. Log out and back in, then re-run this script."; exit 0; fi
 fi
 
 mkdir -p data/web data/backups data/voice data/ollama

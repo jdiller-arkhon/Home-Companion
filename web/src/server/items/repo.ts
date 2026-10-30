@@ -3,6 +3,7 @@ import { newId } from "../ids";
 import { getSettings } from "../settings";
 import { addRecurrence, formatDateOnlyInput, formatLocalDateTimeInput, parseDateOnly, parseLocalDateTime, parseMoney } from "@/lib/time";
 import { kindDef, type KindDef } from "./kinds";
+import { guessAisle } from "@/lib/groceries";
 
 export type Item = {
   id: string; kind: string; owner_id: string; visibility: "shared" | "private"; title: string; status: string;
@@ -125,6 +126,7 @@ export function createItem(ownerId: string, kind: string, input: ParsedInput, op
   const id = newId();
   const now = Date.now();
   const status = opts.status && def.statuses.includes(opts.status) ? opts.status : def.statuses[0];
+  if (kind === "grocery" && !input.data.aisle) input = { ...input, data: { ...input.data, aisle: guessAisle(input.title) } };
   db().prepare(`INSERT INTO items (id,kind,owner_id,visibility,title,status,due_at,amount_cents,parent_id,data,position,created_at,updated_at)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`)
     .run(id, kind, ownerId, opts.visibility ?? def.defaultVisibility, input.title, status, input.due_at, input.amount_cents,

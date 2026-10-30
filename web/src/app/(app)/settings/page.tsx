@@ -8,6 +8,15 @@ import { PageHeader, Pill } from "@/components/ui";
 import { VoicePicker } from "@/components/voice-picker";
 import { PushToggle } from "@/components/notifications";
 import { subscriptionCount } from "@/server/push";
+import { listTokens } from "@/server/tokens";
+import { listExternal } from "@/server/calendar";
+import { CalendarLink, ShortcutTokens } from "@/components/settings-tokens";
+import { ExternalCalendars } from "@/components/calendars";
+
+const day = (ms: number) => new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+function tokenRows(t: ReturnType<typeof listTokens>) {
+  return t.map((x) => ({ id: x.id, name: x.name, created: day(x.created_at), lastUsed: x.last_used_at ? day(x.last_used_at) : null, expires: x.expires_at ? day(x.expires_at) : null }));
+}
 
 function Section({ title, desc, children }: { title: string; desc: string; children: React.ReactNode }) {
   return (
@@ -44,6 +53,17 @@ export default async function Settings() {
         </Section>
         <Section title="Notifications" desc="Reminders for deliveries, upkeep, tasks, occasions and home security, plus your morning briefing. Choose categories under Your profile.">
           <PushToggle devices={subscriptionCount(user.id)} />
+        </Section>
+        <Section title="Calendars" desc="See Hearth on your iPhone calendar, and bring your existing calendars into Hearth.">
+          <div id="calendars" className="space-y-8">
+            <div><p className="mb-3 text-[13px] font-medium">Hearth on your iPhone</p><CalendarLink tokens={tokenRows(listTokens(user.id, "calendar"))} /></div>
+            <div><p className="mb-3 text-[13px] font-medium">Subscribed calendars</p>
+              <ExternalCalendars cals={listExternal(user.id).map((c) => ({ id: c.id, name: c.name, shared: c.shared, mine: c.user_id === user.id, ok: !c.last_error,
+                status: c.last_error ? "Error" : c.last_sync ? `${c.count} events` : "Syncing" }))} /></div>
+          </div>
+        </Section>
+        <Section title="Siri & Shortcuts" desc="Talk to Hearth from Siri, your Apple Watch or the Action button. Each device gets its own key that you can revoke.">
+          <ShortcutTokens tokens={tokenRows(listTokens(user.id, "shortcut"))} />
         </Section>
         <Section title="Password & PIN" desc="Your PIN confirms sensitive actions (unlocking doors, deleting records) and switches profiles quickly on the iPad.">
           <SettingsForm action={changeSecrets} submit="Update" fields={[
@@ -89,6 +109,7 @@ export default async function Settings() {
               { name: "morning_briefing_hour", label: "Morning briefing hour", type: "number", value: s.morning_briefing_hour },
               { name: "ai_prefer_remote", label: "Prefer the GPU computer when available", type: "checkbox", value: s.ai_prefer_remote },
               { name: "evening_recap", label: "Send an evening recap", type: "checkbox", value: s.evening_recap },
+              { name: "kiosk_motion_entity", label: "Display: motion sensor to wake the screen (optional)", value: s.kiosk_motion_entity, placeholder: "binary_sensor.kitchen_motion" },
             ]} />
           </Section>
         </>}
