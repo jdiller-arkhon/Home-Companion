@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowUp, Mic, Sparkles, ShieldAlert, Check, X, Square, Volume2 } from "lucide-react";
 import clsx from "clsx";
 import { ElevateDialog } from "./elevate";
-import { Recorder, transcribe, say, hush, onLevel } from "./voice";
+import { Recorder, transcribe, hush, onLevel, speechStream, unlockAudio } from "./voice";
 import { Mabel, type MabelState } from "./mabel";
 import { AnimatePresence, motion } from "motion/react";
 
@@ -29,16 +29,33 @@ export function Assistant({ conversationId, initial, actions, suggestions, name 
   const [level, setLevel] = useState(0);
   const [speaking, setSpeaking] = useState(false);
   const [streaming, setStreaming] = useState(false);
-  useEffect(() => onLevel((l, s) => { setLevel(l); setSpeaking(s); }), []);
+  const [shape, setShape] = useState(0.5);
+  // Large on iPad/desktop, still generous on phones — and it never shrinks mid-conversation.
+  const [stageSize, setStageSize] = useState(240);
+  useEffect(() => {
+    const m = window.matchMedia("(min-width: 768px)");
+    const upd = () => setStageSize(m.matches ? 260 : 188);
+    upd(); m.addEventListener("change", upd);
+    return () => m.removeEventListener("change", upd);
+  }, []);
+  useEffect(() => onLevel((l, s, sh) => { setLevel(l); setSpeaking(s); setShape(sh); }), []);
   const mabelState: MabelState = listening ? "listening" : speaking ? "speaking" : busy ? "thinking" : "idle";
   const statusText = { listening: "Listening…", thinking: "Thinking…", speaking: "Speaking", idle: "" }[mabelState];
 
-  useEffect(() => { setMsgs(initial); setConvId(conversationId); }, [initial, conversationId]);
+  // Sync from the server (other conversation chosen, or a refresh) — but never while a reply is streaming.
+  const busyRef = useRef(false);
+  useEffect(() => {
+    if (busyRef.current) return;
+    setMsgs(initial); setConvId(conversationId);
+  }, [initial, conversationId]);
   useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [msgs, actions]);
 
   async function send(text: string, viaVoice = false) {
     if (!text.trim() || busy) return;
+    busyRef.current = true;
     setInput(""); setBusy(true); setStreaming(false); setStatus(undefined);
+    unlockAudio(); // inside the tap, so iOS allows the voice that follows
+    const voiceOut = speak || viaVoice ? speechStream() : null;
     setMsgs((m) => [...m, { role: "user", content: text }, { role: "assistant", content: "" }]);
     abort.current = new AbortController();
     let full = "";
@@ -58,16 +75,16 @@ export function Assistant({ conversationId, initial, actions, suggestions, name 
             // Give a new chat its own address so refreshes (and the back button) keep it on screen.
             if (!convId) window.history.replaceState(null, "", `/assistant?c=${ev.id}`);
           }
-          else if (ev.type === "token") { full += ev.text; setStreaming(true); setMsgs((m) => [...m.slice(0, -1), { role: "assistant", content: full }]); }
+          else if (ev.type === "token") { full += ev.text; voiceOut?.push(ev.text as string); setStreaming(true); setMsgs((m) => [...m.slice(0, -1), { role: "assistant", content: full }]); }
           else if (ev.type === "tool") setStatus(ev.status === "needs_confirmation" ? `Waiting for your approval: ${ev.summary}` : ev.status === "running" ? `Working: ${ev.summary ?? ev.name}…` : undefined);
           else if (ev.type === "error") setStatus(ev.message);
         }
       }
-      if ((speak || viaVoice) && full) say(full.replace(/[•*#]/g, "")).catch((e) => setStatus(e.message));
+      voiceOut?.end();
     } catch (e) {
       if ((e as Error).name !== "AbortError") setStatus("Couldn't reach Hearth. Check your connection.");
     } finally {
-      setBusy(false); abort.current = null; router.refresh();
+      busyRef.current = false; setBusy(false); abort.current = null; router.refresh();
     }
   }
 
@@ -91,7 +108,7 @@ export function Assistant({ conversationId, initial, actions, suggestions, name 
       } catch (e) { setStatus((e as Error).message); }
       return;
     }
-    hush();
+    hush(); unlockAudio();
     try { rec.current = new Recorder(); await rec.current.start(); setListening(true); setStatus("Listening… tap the mic again when you're done."); }
     catch (e) { setStatus((e as Error).message); }
   }
@@ -99,29 +116,23 @@ export function Assistant({ conversationId, initial, actions, suggestions, name 
   return (
     <div className="flex min-h-[calc(100dvh-6rem)] flex-col md:min-h-dvh">
       <div className="flex-1 space-y-6 pb-6">
-        {msgs.length === 0 && (
-          <div className="pt-6 text-center">
-            <motion.div initial={{ opacity: 0, scale: 0.85, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ type: "spring", stiffness: 260, damping: 22 }} className="mx-auto w-fit">
-              <Mabel state={mabelState} level={level} size={168} />
-            </motion.div>
-            <h2 className="mt-4 text-[22px] font-semibold tracking-tight">Hi, I'm {name}. How can I help?</h2>
-            <p className="mt-1 text-[14px] text-fg-2">I can plan, remember, look things up in your vault and control the house — sensitive actions always ask first.</p>
-            <div className="mx-auto mt-6 flex max-w-[560px] flex-wrap justify-center gap-2">
-              {suggestions.map((s) => <button key={s} onClick={() => send(s)} className="press rounded-full border border-line px-3.5 py-1.5 text-[13px] text-fg-2 hover:bg-fill hover:text-fg">{s}</button>)}
-            </div>
+        {/* One persistent Mabel: same element, same size, from welcome through every answer. */}
+        <div className="glass sticky top-0 z-10 -mx-4 flex flex-col items-center rounded-b-[28px] px-4 pb-4 pt-4 md:pt-6">
+          <Mabel state={mabelState} level={level} shape={shape} size={stageSize} />
+          <div className="mt-2 text-center">
+            <div className="text-[17px] font-semibold tracking-tight">{name}</div>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div key={statusText || "online"} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                className="text-[13px] text-fg-3">{statusText || (msgs.length ? "Here when you need me" : "How can I help?")}</motion.div>
+            </AnimatePresence>
           </div>
-        )}
-        <AnimatePresence>
-          {msgs.length > 0 && (
-            <motion.div key="mabel-bar" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              className="glass sticky top-0 z-10 -mx-2 flex items-center gap-3 rounded-b-2xl px-2 py-2">
-              <Mabel state={mabelState} level={level} size={52} />
-              <div className="min-w-0">
-                <div className="text-[14px] font-semibold tracking-tight">{name}</div>
-                <AnimatePresence mode="wait">
-                  <motion.div key={statusText || "online"} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: 0.18 }}
-                    className="text-[12px] text-fg-3">{statusText || "Here when you need me"}</motion.div>
-                </AnimatePresence>
+        </div>
+        <AnimatePresence initial={false}>
+          {msgs.length === 0 && (
+            <motion.div key="welcome" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }} className="text-center">
+              <p className="text-[14px] text-fg-2">I can plan, remember, look things up in your vault and look after the house — sensitive actions always ask first.</p>
+              <div className="mx-auto mt-5 flex max-w-[560px] flex-wrap justify-center gap-2">
+                {suggestions.map((s) => <button key={s} onClick={() => send(s)} className="press rounded-full border border-line px-3.5 py-1.5 text-[13px] text-fg-2 hover:bg-fill hover:text-fg">{s}</button>)}
               </div>
             </motion.div>
           )}
@@ -158,7 +169,7 @@ export function Assistant({ conversationId, initial, actions, suggestions, name 
             className="max-h-40 min-h-9 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] outline-none" />
           <button type="button" onClick={() => setSpeak(!speak)} aria-pressed={speak} aria-label="Read replies aloud" className={clsx("press grid size-9 shrink-0 place-items-center rounded-full", speak ? "text-accent" : "text-fg-3 hover:bg-fill")}><Volume2 size={16} /></button>
           {busy ? (
-            <button type="button" onClick={() => abort.current?.abort()} aria-label="Stop" className="press grid size-9 shrink-0 place-items-center rounded-full bg-fg text-bg"><Square size={13} /></button>
+            <button type="button" onClick={() => { abort.current?.abort(); hush(); }} aria-label="Stop" className="press grid size-9 shrink-0 place-items-center rounded-full bg-fg text-bg"><Square size={13} /></button>
           ) : (
             <button disabled={!input.trim()} aria-label="Send" className="press grid size-9 shrink-0 place-items-center rounded-full bg-fg text-bg disabled:opacity-30"><ArrowUp size={17} /></button>
           )}

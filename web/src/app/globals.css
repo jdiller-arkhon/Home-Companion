@@ -123,3 +123,5 @@ a.card:hover, button.card:hover, .card.lift:hover { transform: translateY(-2px);
 .mabel-wave-r { animation: mabel-wave-r 0.9s ease-in-out infinite 0.15s; transform-box: view-box; }
 @keyframes mabel-breathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
 .mabel-breathe { animation: mabel-breathe 4.2s ease-in-out infinite; transform-box: view-box; }
+@keyframes mabel-dot { 0%, 100% { transform: translateY(0); opacity: 0.45; } 50% { transform: translateY(-3px); opacity: 1; } }
+.mabel-dot { animation: mabel-dot 1.1s cubic-bezier(0.45, 0, 0.55, 1) infinite; }

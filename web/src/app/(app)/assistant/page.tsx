@@ -22,7 +22,7 @@ export default async function AssistantPage({ searchParams }: { searchParams: Pr
     <div className="mx-auto grid max-w-[1180px] gap-8 px-5 md:px-10 lg:grid-cols-[1fr_260px]">
       <Live />
       <div className="mx-auto w-full max-w-[720px] pt-8 md:pt-12">
-        <Assistant name={getSettings().assistant_name} key={active?.id ?? "new"} conversationId={active?.id} initial={initial} actions={actions}
+        <Assistant name={getSettings().assistant_name} conversationId={active?.id} initial={initial} actions={actions}
           suggestions={["What's my day look like?", "Add oat milk and eggs to the grocery list", "What maintenance is coming up?", "Turn off all the lights", "When does the car registration expire?"]} />
       </div>
       <aside className="hidden lg:block sticky top-0 h-dvh overflow-y-auto border-l border-line py-12 pl-6">
