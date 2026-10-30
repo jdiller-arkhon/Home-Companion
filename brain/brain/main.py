@@ -83,7 +83,7 @@ async def tts(req: Request, x_hearth_token: str | None = Header(default=None)):
     body = await req.json()
     try:
         from starlette.concurrency import run_in_threadpool
-        audio = await run_in_threadpool(speak, str(body.get("text", "")), str(body.get("voice", "en_US-amy-medium")))
+        audio = await run_in_threadpool(speak, str(body.get("text", "")), str(body.get("voice", "kokoro:af_heart")))
     except VoiceUnavailable as e:
         raise HTTPException(503, str(e))
     return Response(audio, media_type="audio/wav")

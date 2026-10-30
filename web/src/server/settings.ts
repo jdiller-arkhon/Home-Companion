@@ -44,7 +44,7 @@ const DEFAULTS: HouseholdSettings = {
   morning_briefing_hour: 7,
   evening_recap: false,
   assistant_name: "Hearth",
-  assistant_voice: "en_US-amy-medium",
+  assistant_voice: "kokoro:af_heart",
   kiosk_motion_entity: "",
 };
 
