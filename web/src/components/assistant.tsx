@@ -30,7 +30,7 @@ export function Assistant({ conversationId, initial, actions, suggestions, name 
   const [speaking, setSpeaking] = useState(false);
   const [streaming, setStreaming] = useState(false);
   useEffect(() => onLevel((l, s) => { setLevel(l); setSpeaking(s); }), []);
-  const mabelState: MabelState = listening ? "listening" : speaking ? "speaking" : busy && !streaming ? "thinking" : "idle";
+  const mabelState: MabelState = listening ? "listening" : speaking ? "speaking" : busy ? "thinking" : "idle";
   const statusText = { listening: "Listening…", thinking: "Thinking…", speaking: "Speaking", idle: "" }[mabelState];
 
   useEffect(() => { setMsgs(initial); setConvId(conversationId); }, [initial, conversationId]);
@@ -53,7 +53,11 @@ export function Assistant({ conversationId, initial, actions, suggestions, name 
         for (const p of parts) {
           if (!p.startsWith("data: ")) continue;
           const ev = JSON.parse(p.slice(6));
-          if (ev.type === "conversation") setConvId(ev.id);
+          if (ev.type === "conversation") {
+            setConvId(ev.id);
+            // Give a new chat its own address so refreshes (and the back button) keep it on screen.
+            if (!convId) window.history.replaceState(null, "", `/assistant?c=${ev.id}`);
+          }
           else if (ev.type === "token") { full += ev.text; setStreaming(true); setMsgs((m) => [...m.slice(0, -1), { role: "assistant", content: full }]); }
           else if (ev.type === "tool") setStatus(ev.status === "needs_confirmation" ? `Waiting for your approval: ${ev.summary}` : ev.status === "running" ? `Working: ${ev.summary ?? ev.name}…` : undefined);
           else if (ev.type === "error") setStatus(ev.message);

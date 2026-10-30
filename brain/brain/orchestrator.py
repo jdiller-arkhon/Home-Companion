@@ -15,7 +15,7 @@ from typing import AsyncIterator, Awaitable, Callable
 import httpx
 
 from .ollama import chat_stream, pick_endpoint
-from .prompt import build_system
+from .prompt import build_system, build_user
 
 MAX_STEPS = 6
 WEB_URL = os.environ.get("HEARTH_WEB_URL", "http://127.0.0.1:3000")
@@ -41,7 +41,7 @@ async def run_turn(payload: dict, call_tool: ToolCaller = call_web_tool, stream=
     model = payload["models"]["model"]
     messages: list[dict] = [{"role": "system", "content": build_system(payload)}]
     messages += [m for m in payload.get("history", []) if m.get("content")]
-    messages.append({"role": "user", "content": payload["message"]})
+    messages.append({"role": "user", "content": build_user(payload)})
     tainted = False  # flips once untrusted text (documents) enters the context
 
     for _ in range(MAX_STEPS):

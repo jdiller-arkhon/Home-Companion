@@ -77,6 +77,11 @@ test.describe.serial("household flows", () => {
     await page.getByLabel("Message").fill("What's my day look like?");
     await page.getByRole("button", { name: "Send" }).click();
     await expect(page.getByText(/isn't reachable right now/)).toBeVisible({ timeout: 15_000 });
+    // The conversation must stay on screen after the reply finishes and the page refreshes.
+    await page.waitForTimeout(2500);
+    await expect(page).toHaveURL(/\/assistant\?c=/);
+    await expect(page.getByText(/isn't reachable right now/)).toBeVisible();
+    await expect(page.getByText("What's my day look like?").last()).toBeVisible();
   });
 
   test("month calendar, email paste, notifications", async () => {

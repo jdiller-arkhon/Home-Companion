@@ -84,6 +84,13 @@ export function briefingLines(s: Snapshot, mode: "morning" | "evening" = "mornin
     lines.push(todays.length ? `${todays.length} event${todays.length > 1 ? "s" : ""} today: ${todays.map((e) => e.title).join(", ")}.` : "Your calendar is clear today.");
   }
   if (s.overdue.length) lines.push(`Overdue: ${s.overdue.map((i) => i.title).join(", ")}.`);
+  if (mode === "morning") {
+    const wk = (ms: number) => new Date(ms).toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
+    const later = [...s.events, ...s.tasks, ...s.maintenance]
+      .filter((i) => i.due_at! >= dayEnd && i.due_at! < s.today + 7 * DAY)
+      .sort((a, b) => a.due_at! - b.due_at!).slice(0, 5);
+    if (later.length) lines.push(`Later this week: ${later.map((i) => `${i.title} (${wk(i.kind === "event" || i.kind === "external" ? i.due_at! - (i.due_at! % DAY) : i.due_at!)})`).join(", ")}.`);
+  }
   const dueTasks = s.tasks.filter((t) => t.due_at! < dayEnd && t.due_at! >= s.today);
   if (dueTasks.length) lines.push(`Due today: ${dueTasks.map((t) => t.title).join(", ")}.`);
   const arriving = s.packages.filter((p) => p.due_at != null && p.due_at < dayEnd + DAY);

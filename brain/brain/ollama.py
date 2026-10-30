@@ -30,7 +30,8 @@ async def pick_endpoint(models: dict) -> str:
 
 async def chat_stream(base: str, model: str, messages: list[dict], tools: list[dict]) -> AsyncIterator[dict]:
     """Yields Ollama /api/chat chunks (streaming, with native tool calling)."""
-    body = {"model": model, "messages": messages, "tools": tools, "stream": True, "options": {"temperature": 0.3, "num_ctx": 8192}}
+    # keep_alive keeps the model (and its prompt cache) warm between questions.
+    body = {"model": model, "messages": messages, "tools": tools, "stream": True, "keep_alive": "30m", "options": {"temperature": 0.3, "num_ctx": 8192}}
     async with httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=5.0)) as c:
         async with c.stream("POST", f"{base.rstrip('/')}/api/chat", json=body) as r:
             if r.status_code == 404:
