@@ -121,3 +121,5 @@ a.card:hover, button.card:hover, .card.lift:hover { transform: translateY(-2px);
 @keyframes mabel-wave-r { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-14deg); } }
 .mabel-wave-l { animation: mabel-wave-l 0.9s ease-in-out infinite; transform-box: view-box; }
 .mabel-wave-r { animation: mabel-wave-r 0.9s ease-in-out infinite 0.15s; transform-box: view-box; }
+@keyframes mabel-breathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
+.mabel-breathe { animation: mabel-breathe 4.2s ease-in-out infinite; transform-box: view-box; }

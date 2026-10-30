@@ -5,8 +5,8 @@ import clsx from "clsx";
 export type MabelState = "idle" | "listening" | "thinking" | "speaking";
 
 /**
- * Mabel — Hearth's companion mascot: a soft little hearth-spirit with a flame
- * tuft. Hand-built SVG so she's crisp at any size and cheap to animate. Her
+ * Mabel — Hearth's companion: a sweet, grandmotherly cartoon with a silver
+ * bun, round glasses and pearls. Hand-built SVG so she's crisp at any size and cheap to animate. Her
  * mouth follows the live loudness of her voice (voice.ts → onLevel).
  */
 export function Mabel({ state = "idle", level = 0, size = 160, className }: { state?: MabelState; level?: number; size?: number; className?: string }) {
@@ -20,69 +20,84 @@ export function Mabel({ state = "idle", level = 0, size = 160, className }: { st
 
   const o = state === "speaking" ? Math.min(1, level * 2.6) : 0;
   const mouthH = 1.5 + o * 13;
-  const mouthW = 6 + o * 2.5;
-  const look = state === "thinking" ? { x: 4, y: -5 } : state === "listening" ? { x: 0, y: 1 } : { x: 0, y: 0 };
-  const eyeRy = blink ? 0.8 : state === "listening" ? 15 : 14;
-  const tuft = state === "listening" ? "mabel-tuft-perk" : state === "speaking" ? "mabel-tuft-flicker" : "mabel-tuft-idle";
+  const mouthW = 8 + o * 2;
+  const look = state === "thinking" ? { x: 3, y: -3 } : { x: 0, y: 0 };
+  const eyeRy = blink ? 0.6 : state === "listening" ? 5.6 : 5;
 
   return (
     <div className={clsx("relative inline-block", className)} style={{ width: size, height: size }}>
-      {state === "listening" && <span className="absolute inset-[6%] animate-ping rounded-full bg-accent/20" style={{ animationDuration: "1.6s" }} />}
-      <svg viewBox="0 0 200 200" width={size} height={size} role="img" aria-label={`Mabel, ${state}`} className="relative overflow-visible">
+      {state === "listening" && <span className="absolute inset-[4%] animate-ping rounded-full bg-accent/20" style={{ animationDuration: "1.6s" }} />}
+      <svg viewBox="0 0 200 200" width={size} height={size} role="img" aria-label={`Mabel, ${state}`}
+        className={clsx("relative overflow-visible transition-transform duration-500", state === "listening" && "-rotate-3")}>
         <defs>
-          <radialGradient id="mb-body" cx="38%" cy="28%" r="85%"><stop offset="0%" stopColor="#dfe2ff" /><stop offset="50%" stopColor="#b3b9ff" /><stop offset="100%" stopColor="#8f97f6" /></radialGradient>
-          <radialGradient id="mb-belly" cx="50%" cy="35%" r="65%"><stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" /><stop offset="100%" stopColor="#f1f2ff" stopOpacity="0.55" /></radialGradient>
-          <linearGradient id="mb-flame" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stopColor="#ffa877" /><stop offset="55%" stopColor="#ffcf7a" /><stop offset="100%" stopColor="#fff0be" /></linearGradient>
-          <radialGradient id="mb-blush" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#ff8fb1" stopOpacity="0.75" /><stop offset="100%" stopColor="#ff8fb1" stopOpacity="0" /></radialGradient>
+          <radialGradient id="mb-bg" cx="50%" cy="38%" r="65%"><stop offset="0%" stopColor="#f1f2ff" /><stop offset="100%" stopColor="#dde0fb" /></radialGradient>
+          <linearGradient id="mb-hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#f3f3f7" /><stop offset="100%" stopColor="#c3c6d4" /></linearGradient>
+          <linearGradient id="mb-skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#ffe6d6" /><stop offset="100%" stopColor="#f6d0b9" /></linearGradient>
+          <radialGradient id="mb-blush" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#ff8f9e" stopOpacity="0.6" /><stop offset="100%" stopColor="#ff8f9e" stopOpacity="0" /></radialGradient>
+          <clipPath id="mb-clip"><circle cx="100" cy="100" r="98" /></clipPath>
         </defs>
-        {/* soft ground shadow */}
-        <ellipse cx="100" cy="184" rx="44" ry="6.5" fill="#11111a" opacity="0.09" className="mabel-shadow" />
-        <g className="mabel-bob">
-          {/* tiny feet */}
-          <ellipse cx="78" cy="176" rx="13" ry="7.5" fill="#8f97f6" />
-          <ellipse cx="122" cy="176" rx="13" ry="7.5" fill="#8f97f6" />
-          {/* round, squishy body (big head = cute) */}
-          <path d="M100 42 C152 42 174 82 174 118 C174 158 144 178 100 178 C56 178 26 158 26 118 C26 82 48 42 100 42 Z" fill="url(#mb-body)" />
-          {/* flame tuft with a little curl */}
-          <g className={tuft} style={{ transformOrigin: "100px 46px" }}>
-            <path d="M100 14 C112 24 118 34 113 44 C109 51 91 51 88 44 C84 35 90 30 96 26 C95 33 99 36 102 33 C105 29 103 20 100 14 Z" fill="url(#mb-flame)" />
-            <ellipse cx="100" cy="41" rx="5" ry="5.5" fill="#fff6dc" opacity="0.9" />
-          </g>
-          {/* belly */}
-          <ellipse cx="100" cy="151" rx="36" ry="23" fill="url(#mb-belly)" />
-          {/* tiny heart on the belly */}
-          <path d="M100 165 C93 160 93 154 97.5 153 C99 152.6 100 154 100 155.3 C100 154 101 152.6 102.5 153 C107 154 107 160 100 165 Z" fill="#ff9fbf" opacity="0.75" />
-          {/* stubby arms */}
-          <ellipse cx="30" cy="132" rx="9" ry="12" fill="#97a0f8" className={state === "speaking" ? "mabel-wave-l" : undefined} style={{ transformOrigin: "36px 124px" }} />
-          <ellipse cx="170" cy="132" rx="9" ry="12" fill="#97a0f8" className={state === "speaking" ? "mabel-wave-r" : undefined} style={{ transformOrigin: "164px 124px" }} />
-          {/* gloss */}
-          <ellipse cx="66" cy="70" rx="15" ry="8" fill="#ffffff" opacity="0.45" transform="rotate(-28 66 70)" />
-          <circle cx="86" cy="58" r="3" fill="#ffffff" opacity="0.5" />
-          {/* big sparkly eyes, set low and wide */}
-          <g style={{ transform: `translate(${look.x}px, ${look.y}px)`, transition: "transform 420ms cubic-bezier(.22,1,.36,1)" }}>
-            <ellipse cx="74" cy="110" rx="12" ry={eyeRy} fill="#211d3d" style={{ transition: "ry 90ms" }} />
-            <ellipse cx="126" cy="110" rx="12" ry={eyeRy} fill="#211d3d" style={{ transition: "ry 90ms" }} />
-            {!blink && <>
-              <circle cx="79" cy="103" r="5" fill="#fff" /><circle cx="131" cy="103" r="5" fill="#fff" />
-              <circle cx="69" cy="117" r="2.4" fill="#fff" opacity="0.9" /><circle cx="121" cy="117" r="2.4" fill="#fff" opacity="0.9" />
-              <path d="M71 121 q3 2 7 0" stroke="#7c84ee" strokeWidth="1.6" strokeLinecap="round" fill="none" opacity="0.7" />
-              <path d="M123 121 q3 2 7 0" stroke="#7c84ee" strokeWidth="1.6" strokeLinecap="round" fill="none" opacity="0.7" />
-            </>}
-          </g>
-          {/* soft blush */}
-          <ellipse cx="54" cy="130" rx="14" ry="9" fill="url(#mb-blush)" opacity={0.85 + o * 0.15} />
-          <ellipse cx="146" cy="130" rx="14" ry="9" fill="url(#mb-blush)" opacity={0.85 + o * 0.15} />
-          {/* little mouth */}
-          {o < 0.08 ? (
-            state === "thinking"
-              ? <path d="M95 132 q5 1.5 10 -1" stroke="#211d3d" strokeWidth="2.6" strokeLinecap="round" fill="none" />
-              : <path d="M93 129 q3.5 4.5 7 0 q3.5 4.5 7 0" stroke="#211d3d" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-          ) : (
-            <g>
-              <path d={`M${100 - mouthW} 128 C${100 - mouthW} ${128 + mouthH * 1.3} ${100 + mouthW} ${128 + mouthH * 1.3} ${100 + mouthW} 128 Z`} fill="#3a1f3a" />
-              {o > 0.3 && <ellipse cx="100" cy={128 + mouthH * 0.78} rx={mouthW * 0.5} ry={mouthH * 0.18} fill="#ff7a93" />}
+        <circle cx="100" cy="100" r="98" fill="url(#mb-bg)" />
+        <g clipPath="url(#mb-clip)">
+          <g className="mabel-breathe">
+            {/* cardigan, blouse collar, pearls */}
+            <path d="M34 214 C36 170 62 150 100 150 C138 150 164 170 166 214 Z" fill="#7d86ef" />
+            <path d="M80 152 L100 172 L120 152 C114 149 107 148 100 148 C93 148 86 149 80 152 Z" fill="#ffffff" />
+            <path d="M84 156 Q100 176 116 156" stroke="none" fill="none" />
+            {[-14, -9.5, -4.8, 0, 4.8, 9.5, 14].map((dx, i) => (
+              <circle key={i} cx={100 + dx} cy={160 + Math.abs(dx) * -0.38 + 3.2} r="2.6" fill="#fffaf2" stroke="#e8e0d4" strokeWidth="0.6" />
+            ))}
+            {/* neck */}
+            <path d="M89 134 h22 v18 c-6 4 -16 4 -22 0 Z" fill="#f0c4a8" />
+            {/* back hair (soft silver) */}
+            <path d="M52 100 C48 64 72 42 100 42 C128 42 152 64 148 100 C147 116 142 126 136 130 L64 130 C58 126 53 116 52 100 Z" fill="url(#mb-hair)" stroke="#b4b7c6" strokeWidth="1.2" />
+            {/* bun */}
+            <circle cx="100" cy="36" r="17" fill="url(#mb-hair)" stroke="#b4b7c6" strokeWidth="1.2" />
+            <path d="M88 30 q12 -9 24 0" stroke="#c9ccd9" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+            {/* face */}
+            <ellipse cx="100" cy="102" rx="42" ry="44" fill="url(#mb-skin)" />
+            {/* ears + pearl earrings */}
+            <ellipse cx="59" cy="106" rx="6" ry="8" fill="#f4caae" />
+            <ellipse cx="141" cy="106" rx="6" ry="8" fill="#f4caae" />
+            <circle cx="58" cy="116" r="2.8" fill="#fffaf2" stroke="#e8e0d4" strokeWidth="0.6" />
+            <circle cx="142" cy="116" r="2.8" fill="#fffaf2" stroke="#e8e0d4" strokeWidth="0.6" />
+            {/* soft wavy fringe swept to the sides */}
+            <path d="M58 92 C58 64 78 52 100 52 C122 52 142 64 142 92 C134 80 124 72 112 70 C106 76 94 76 88 70 C76 72 66 80 58 92 Z" fill="url(#mb-hair)" />
+            <path d="M70 76 q10 -8 22 -6 M108 70 q12 -2 22 6" stroke="#c9ccd9" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+            {/* blush */}
+            <ellipse cx="72" cy="120" rx="12" ry="8" fill="url(#mb-blush)" opacity={0.9 + o * 0.1} />
+            <ellipse cx="128" cy="120" rx="12" ry="8" fill="url(#mb-blush)" opacity={0.9 + o * 0.1} />
+            {/* gentle brows */}
+            <path d={state === "thinking" ? "M76 86 q8 -5 15 -1" : "M76 88 q8 -3.5 15 0"} stroke="#b9bcc9" strokeWidth="2.6" strokeLinecap="round" fill="none" />
+            <path d={state === "thinking" ? "M109 84 q8 -3 15 2" : "M109 88 q8 -3.5 15 0"} stroke="#b9bcc9" strokeWidth="2.6" strokeLinecap="round" fill="none" />
+            {/* kind eyes */}
+            <g style={{ transform: `translate(${look.x}px, ${look.y}px)`, transition: "transform 400ms cubic-bezier(.22,1,.36,1)" }}>
+              <ellipse cx="84" cy="102" rx="4.6" ry={eyeRy} fill="#3a2a26" style={{ transition: "ry 90ms" }} />
+              <ellipse cx="116" cy="102" rx="4.6" ry={eyeRy} fill="#3a2a26" style={{ transition: "ry 90ms" }} />
+              {!blink && <><circle cx="85.8" cy="100" r="1.6" fill="#fff" /><circle cx="117.8" cy="100" r="1.6" fill="#fff" /></>}
             </g>
-          )}
+            {/* smile lines */}
+            <path d="M68 100 q-3 3 -1 7 M132 100 q3 3 1 7" stroke="#e3ad94" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.8" />
+            {/* round glasses */}
+            <g stroke="#a98b74" strokeWidth="2.4" fill="#ffffff" fillOpacity="0.12">
+              <circle cx="84" cy="102" r="12.5" />
+              <circle cx="116" cy="102" r="12.5" />
+              <path d="M96.5 101 q3.5 -3 7 0" fill="none" />
+              <path d="M71.5 100 L61 97 M128.5 100 L139 97" fill="none" />
+            </g>
+            <path d="M77 95 l4 -3" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+            <path d="M109 95 l4 -3" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+            {/* nose */}
+            <path d="M97 114 q3 3.5 6 0" stroke="#dfa287" strokeWidth="2" strokeLinecap="round" fill="none" />
+            {/* mouth */}
+            {o < 0.08 ? (
+              <path d={state === "thinking" ? "M93 128 q7 2 14 -1" : "M89 125 q11 10 22 0"} stroke="#b35a5a" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+            ) : (
+              <g>
+                <path d={`M${100 - mouthW} 125 C${100 - mouthW} ${125 + mouthH * 1.3} ${100 + mouthW} ${125 + mouthH * 1.3} ${100 + mouthW} 125 Z`} fill="#7a3434" />
+                {o > 0.3 && <ellipse cx="100" cy={125 + mouthH * 0.78} rx={mouthW * 0.5} ry={mouthH * 0.18} fill="#e57b80" />}
+              </g>
+            )}
+          </g>
         </g>
       </svg>
       {state === "thinking" && (
