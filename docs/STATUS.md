@@ -7,14 +7,13 @@ Legend: ✅ working and tested · 🟡 working, not verified against real hardwa
 | Design system (light/dark, Geist, motion, reduced motion) | ✅ | Tokens in `web/src/app/globals.css` |
 | Onboarding, sign-in, two profiles, private/shared data | ✅ | e2e test verifies privacy across profiles |
 | PIN / step-up auth, rate limiting, audit log | ✅ | |
-| Today dashboard + deterministic briefing | ✅ | Works with no AI and no internet |
+| Today dashboard + deterministic briefing | ✅ | Works with no AI and no internet. Finance removed at your request |
 | Planner (month calendar, tasks, groceries, meals, recipes, chores, errands, occasions, notes, goals) | ✅ | Month grid shows events, tasks, chores, bills, upkeep and yearly occasions |
-| Finance (accounts, bills, subscriptions, spending, budgets, savings, trend) | ✅ | Wescom/any bank: OFX/QFX/CSV statement import with dedupe, auto-categories and balance-as-of. Automatic sync (SimpleFIN, ~$15/yr) ⏳ awaiting your go-ahead. Plaid not recommended for a household |
 | Upkeep (maintenance, appliances/warranties, vehicles, repairs, supplies) | ✅ | Manuals as links; uploading manuals goes in the Vault |
 | Packages | ✅ | Carrier auto-detection + tracking links; paste a shipping email to extract tracking/merchant/date (pattern-based, injection-safe). Live carrier status APIs ⏳ (require business API accounts) |
 | Vault (encryption, folders, sharing, expiry, search, export) | ✅ | |
 | Vault OCR | 🟡 | PDF text layer, scanned PDFs (pdfium → Tesseract) and images. OCR test runs only where Tesseract is installed (the brain image) |
-| Realtime collaboration | ✅ | Server-sent events refresh every open screen |
+| Realtime collaboration | ✅ | Live updates, “ask the household” nudges, done-by attribution |
 | System health, backups | ✅ / 🟡 | Pi thermal and throttle readings not yet verified on real Pi hardware |
 | Settings (household, people, HA, AI, profile, notifications) | ✅ | |
 | Notifications (in-app inbox + Web Push) | ✅ / 🟡 | Reminder engine tested (bills, renewals, tasks, packages, upkeep, warranties, low stock, occasions, document expiry, night security check). Push delivery needs a real iPhone with Hearth on the Home Screen (iOS 16.4+) |
@@ -25,12 +24,25 @@ Legend: ✅ working and tested · 🟡 working, not verified against real hardwa
 | PWA install, offline fallback, icons | ✅ | Requires the HTTPS certificate step on iOS |
 | Docker Compose deployment for Pi (arm64) | 🟡 | Images are multi-arch by design; not yet built on a physical Pi |
 
+| Calendar sync | ✅ | Per-person iCal feed (webcal), subscribed iCloud/Google calendars merged into month view, agenda and briefing. Tested with a generated feed; not yet with real iCloud/Google URLs |
+| Siri & Shortcuts | ✅ / 🟡 | Endpoint, per-device keys, instant command parsing tested; Shortcut building on a real iPhone not yet done |
+| Semantic document search | 🟡 | Needs `ollama pull nomic-embed-text`; falls back to keyword search automatically |
+| Photo capture (receipts/labels → appliance + warranty) | ✅ / 🟡 | Flow and pattern extraction tested; OCR + model structuring need the brain container |
+| Grocery intelligence | ✅ | Store-section grouping, auto-sections, learned purchase rhythm, recipe → groceries |
+| Leaving / arriving routines | 🟡 | Engine tested with simulated presence; needs HA person entities (phones with the HA app) |
+| Display mode | ✅ / 🟡 | Clock, agenda, briefing, photo frame (Vault folder “Photos”), tap wake; motion wake needs an HA motion sensor |
+| Year in review | ✅ | Printable |
+| Emergency card + sitter links | ✅ | Expiring, revocable, read-only, audited |
+| Premium motion | ✅ | Page transitions, sliding nav/tabs, spring sheets, animated rows, instant check-off, skeletons; Reduce Motion respected |
+| Pi touchscreen appliance | 🟡 | `scripts/kiosk-setup.sh` written; not yet run on a Pi |
+| Hearth OS image | 🟡 | pi-gen recipe in `os/`; not yet built |
+| iPad as a dedicated device | ✅ | Home Screen app + Guided Access (Apple doesn't allow replacing iPadOS) |
+
 ## Tests
-* `web`: 24 unit tests (records, validation, privacy, recurrence, AI permission gate, taint escalation, injection wrapper, reminders, routines, tracking extraction, OFX/CSV import)
-* `web/e2e`: 9 Playwright flows (onboarding, forms and validation, finance mark-paid, statement import, vault upload and search, month calendar, email paste, AI-offline fallback, iPhone layout, cross-profile privacy, API auth)
+* `web`: 36 unit tests (records, privacy, recurrence, AI permission gate, taint escalation, injection wrapper, reminders, routines incl. presence, tracking, iCal read/write/recurrence, voice commands, ingredients and grocery rhythm, receipt extraction)
+* `web/e2e`: 11 Playwright flows (onboarding, forms, records, vault, month calendar, email paste, Siri key + commands, calendar feed, emergency share + revoke, display, report, photo capture without AI, AI-offline fallback, iPhone layout, cross-profile privacy, API auth)
 * `brain`: 4 tests (taint propagation, step limit, scanned-PDF OCR where Tesseract exists, unsupported types)
 
 ## Known blockers / decisions for you
-1. **Automatic bank sync** (SimpleFIN Bridge, ~$15/yr, read-only): not added; your call. Statement import works today for free.
-2. **Push notifications** on iPhone require Hearth installed to the Home Screen, then Settings → Notifications → Enable on this device.
-3. Real-hardware verification (Pi, Home Assistant, Ollama, voice) needs your devices.
+1. **Push notifications** on iPhone require Hearth installed to the Home Screen, then Settings → Notifications → Enable on this device.
+2. Real-hardware verification (Pi, Home Assistant, Ollama, voice) needs your devices.

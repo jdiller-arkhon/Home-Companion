@@ -2,6 +2,7 @@
 import React, { startTransition, useActionState, useEffect, useState, useTransition } from "react";
 import { Check, Plus, Trash2, Lock, Repeat, ExternalLink } from "lucide-react";
 import clsx from "clsx";
+import { AnimatePresence, motion } from "motion/react";
 import { KINDS, statusLabel, type Field } from "@/server/items/kinds";
 import { saveItem, completeAction, deleteAction, statusAction, type ItemFormState } from "@/server/item-actions";
 import { Sheet, Button, inputCls, Pill } from "./ui";
@@ -77,6 +78,8 @@ export function RecordBoard({ kind, rows, people, emptyText }: { kind: string; r
   const [editing, setEditing] = useState<RecordRow | "new" | null>(null);
   const [elevateFor, setElevateFor] = useState<string | null>(null);
   const [note, setNote] = useState<string>();
+  const [completing, setCompleting] = useState<Set<string>>(new Set());
+  const complete = (id: string) => { setCompleting((s) => new Set(s).add(id)); start(() => completeAction(id)); };
   const [, start] = useTransition();
   const canComplete = !!def.doneStatus;
 
@@ -98,17 +101,20 @@ export function RecordBoard({ kind, rows, people, emptyText }: { kind: string; r
         <button onClick={() => setEditing("new")} className="press w-full rounded-[var(--radius)] border border-dashed border-line py-10 text-[13px] text-fg-3 hover:text-fg hover:border-fg-3">{emptyText}</button>
       ) : (
         <ul className="card divide-y divide-line overflow-hidden">
-          {rows.map((r, i) => (<React.Fragment key={r.id}>
-            {r.group && r.group !== rows[i - 1]?.group && <li className="eyebrow bg-fill/50 px-4 py-1.5">{r.group}</li>}
-            <li className="group flex items-center gap-3 px-4 py-3 hover:bg-fill/60">
+          <AnimatePresence initial={false}>
+          {rows.flatMap((r, i) => [
+            r.group && r.group !== rows[i - 1]?.group ? <motion.li layout key={`g-${r.group}`} className="eyebrow bg-fill/50 px-4 py-1.5">{r.group}</motion.li> : null,
+            <motion.li key={r.id} layout initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }} className="group flex items-center gap-3 overflow-hidden px-4 py-3 hover:bg-fill/60">
               {canComplete && r.status !== def.doneStatus && (
-                <button onClick={() => start(() => completeAction(r.id))} aria-label={`${completeLabel(kind)}: ${r.title}`} title={completeLabel(kind)}
-                  className="press grid size-5 shrink-0 place-items-center rounded-full border border-line-strong text-transparent hover:border-ok hover:text-ok" style={{ borderColor: "var(--line-strong)" }}>
+                <button onClick={() => complete(r.id)} aria-label={`${completeLabel(kind)}: ${r.title}`} title={completeLabel(kind)} disabled={completing.has(r.id)}
+                  className={clsx("press grid size-5 shrink-0 place-items-center rounded-full border transition-colors duration-200",
+                    completing.has(r.id) ? "pop border-ok bg-ok text-white" : "text-transparent hover:border-ok hover:text-ok")} style={completing.has(r.id) ? undefined : { borderColor: "var(--line-strong)" }}>
                   <Check size={12} strokeWidth={3} />
                 </button>
               )}
               <button onClick={() => setEditing(r)} className="min-w-0 flex-1 text-left">
-                <div className={clsx("flex items-center gap-2 text-[14px]", r.status === def.doneStatus && "text-fg-3 line-through")}>
+                <div className={clsx("flex items-center gap-2 text-[14px] transition-colors duration-300", (r.status === def.doneStatus || completing.has(r.id)) && "text-fg-3 line-through")}>
                   <span className="truncate">{r.title}</span>
                   {r.visibility === "private" && <Lock size={11} className="shrink-0 text-fg-3" aria-label="Private" />}
                   {r.recurring && <Repeat size={11} className="shrink-0 text-fg-3" aria-label="Repeats" />}
@@ -120,15 +126,16 @@ export function RecordBoard({ kind, rows, people, emptyText }: { kind: string; r
                 <select aria-label="Status" value={r.status} onChange={(e) => start(() => statusAction(r.id, e.target.value))} className="rounded-md bg-transparent text-[12px] text-fg-2">
                   {def.statuses.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
                 </select>
-              ) : r.status !== def.statuses[0] && <Pill>{statusLabel(r.status)}</Pill>}
+              ) : r.status !== def.statuses[0] && !r.doneBy && <Pill>{statusLabel(r.status)}</Pill>}
               {r.dueLabel && <Pill tone={r.dueTone}>{r.dueLabel}</Pill>}
               {r.amount && <span className="tnum text-[14px] font-medium">{r.amount}</span>}
               {r.doneBy && <span className="text-[12px] text-fg-3">✓ {r.doneBy}</span>}
               {["task", "chore", "errand"].includes(kind) && r.status === "open" && (
                 <button onClick={() => start(async () => setNote(await nudge(r.id)))} aria-label={`Ask the household about ${r.title}`} title="Ask the household" className="text-fg-3 opacity-0 transition group-hover:opacity-100 hover:text-accent focus:opacity-100"><BellRing size={14} /></button>
               )}
-            </li>
-          </React.Fragment>))}
+            </motion.li>,
+          ])}
+          </AnimatePresence>
         </ul>
       )}
       <Sheet open={!!editing} onOpenChange={(o) => !o && setEditing(null)} title={editing === "new" ? `New ${def.label.toLowerCase()}` : def.label}>

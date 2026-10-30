@@ -12,7 +12,7 @@ function greeting(tz: string) {
 
 function Panel({ title, icon: Icon, href, children, className = "" }: { title: string; icon: React.ElementType; href?: string; children: React.ReactNode; className?: string }) {
   return (
-    <section className={`card rise p-5 ${className}`}>
+    <section className={`card lift rise p-5 ${className}`}>
       <header className="flex items-center gap-2 mb-4">
         <Icon size={15} strokeWidth={1.75} className="text-fg-3" />
         <h2 className="text-[13px] font-medium text-fg-2">{title}</h2>

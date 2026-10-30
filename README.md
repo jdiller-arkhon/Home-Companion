@@ -4,14 +4,16 @@ A private household companion for two people. It runs on a Raspberry Pi 5 on you
 
 | | |
 |---|---|
-| **Today** | Greeting, grounded daily briefing, weather, agenda, bills, home status, packages |
-| **Assistant** | Local LLM (Ollama) with tool calling, streaming, memory, voice in and out (Whisper + Piper), approval cards for sensitive actions |
-| **Home** | Home Assistant devices by room: lights, switches, locks, thermostats, covers, sensors, scenes |
-| **Planner** | Shared and private calendar, tasks, errands, groceries, meals, recipes, chores, occasions, notes, goals |
-| **Finance** | Bills, subscriptions, spending, budgets, savings goals, 6-month trend. **It never moves money.** |
-| **Upkeep** | Maintenance schedule, appliances and warranties, vehicles, repair history, supplies |
+| **Today** | Greeting, grounded daily briefing, weather, agenda, upkeep, home status, packages |
+| **Assistant** | Local LLM (Ollama) with tool calling, streaming, memory, meaning-based document search, meal planning, voice in/out (Whisper + Piper), approval cards; also reachable from Siri |
+| **Home** | Home Assistant devices by room, floor plan, timed and leaving/arriving routines |
+| **Planner** | Month calendar (+ iPhone/iCloud/Google sync), tasks with check-in nudges, smart groceries, meals and recipes, chores, occasions, notes, goals |
+| **Upkeep** | Maintenance, appliances and warranties (add from a photo), vehicles, repairs, supplies |
 | **Vault** | AES-256-GCM encrypted documents, text search, OCR, expiry dates, per-document sharing |
 | **Packages** | Manual shipment tracking with status and expected dates |
+| **Emergency** | House info card with expiring, read-only links for sitters |
+| **Year in review** | Printable household report |
+| **Display** | Always-on kitchen/wall screen with photo frame |
 | **System** | Pi temperature, CPU, RAM, storage, services, AI models, backups, audit log, errors |
 
 ## Architecture
@@ -39,7 +41,7 @@ git clone <this repo> hearth && cd hearth
 ./scripts/install-pi.sh
 ```
 
-Then follow **[docs/INSTALL.md](docs/INSTALL.md)** to trust the certificate and add Hearth to your iPhone and iPad home screens.
+Then follow **[docs/INSTALL.md](docs/INSTALL.md)** to trust the certificate and add Hearth to your iPhone and iPad home screens. For a dedicated touchscreen that boots straight into Hearth, run `scripts/kiosk-setup.sh` (or build the image in [os/](os/README.md)).
 
 ## Development
 

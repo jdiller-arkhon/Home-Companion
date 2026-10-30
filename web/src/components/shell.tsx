@@ -4,6 +4,8 @@ import { usePathname } from "next/navigation";
 import { Home, Sparkles, Lightbulb, CalendarDays, MonitorSmartphone, Siren, BarChart3, Wrench, Lock, Package, Activity, Settings } from "lucide-react";
 import clsx from "clsx";
 import { NotificationBell } from "./notifications";
+import { motion } from "motion/react";
+import { spring } from "./motion";
 
 const NAV = [
   { href: "/", label: "Today", icon: Home },
@@ -33,9 +35,10 @@ export function Shell({ user, household, children, notifications }: { user: { na
         </div>
         <nav className="flex flex-col gap-0.5">
           {NAV.map(({ href, label, icon: Icon, ai }) => (
-            <Link key={href} href={href} className={clsx("press flex items-center gap-3 rounded-lg px-2.5 py-2 text-[14px]",
-              active(href) ? "bg-fill text-fg font-medium" : "text-fg-2 hover:text-fg hover:bg-fill")}>
-              <Icon size={16} strokeWidth={1.75} className={ai ? "text-accent" : undefined} />{label}
+            <Link key={href} href={href} className={clsx("press relative flex items-center gap-3 rounded-lg px-2.5 py-2 text-[14px] transition-colors",
+              active(href) ? "text-fg font-medium" : "text-fg-2 hover:text-fg")}>
+              {active(href) && <motion.span layoutId="nav-pill" transition={spring} className="absolute inset-0 rounded-lg bg-fill" style={{ boxShadow: "inset 0 0 0 1px var(--line)" }} />}
+              <Icon size={16} strokeWidth={1.75} className={clsx("relative", ai && "text-accent")} /><span className="relative">{label}</span>
             </Link>
           ))}
         </nav>
@@ -56,8 +59,9 @@ export function Shell({ user, household, children, notifications }: { user: { na
       </main>
       <nav className="glass md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-line grid grid-cols-5 pb-[env(safe-area-inset-bottom)]">
         {NAV.filter((n) => MOBILE.includes(n.href)).map(({ href, label, icon: Icon }) => (
-          <Link key={href} href={href} className={clsx("flex flex-col items-center gap-1 py-2.5 text-[10px]", active(href) ? "text-fg" : "text-fg-3")}>
-            <Icon size={20} strokeWidth={1.75} />{label}
+          <Link key={href} href={href} className={clsx("relative flex flex-col items-center gap-1 py-2.5 text-[10px] transition-colors", active(href) ? "text-fg" : "text-fg-3")}>
+            {active(href) && <motion.span layoutId="tab-dot" transition={spring} className="absolute top-1 h-[3px] w-5 rounded-full bg-fg" />}
+            <motion.span whileTap={{ scale: 0.86 }} className="grid place-items-center"><Icon size={20} strokeWidth={1.75} /></motion.span>{label}
           </Link>
         ))}
       </nav>

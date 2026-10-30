@@ -111,7 +111,7 @@ test.describe.serial("household flows", () => {
     expect(key).toMatch(/^sho_/);
 
     const add = await request.post("/api/shortcuts", { headers: { Authorization: `Bearer ${key}` }, data: { text: "Add bananas and coffee to the grocery list" } });
-    expect(await add.text()).toBe("Added bananas and coffee to the grocery list.");
+    expect(await add.text()).toBe("Added Bananas and Coffee to the grocery list.");
     expect((await request.post("/api/shortcuts", { headers: { Authorization: "Bearer nope" }, data: { text: "hi" } })).status()).toBe(401);
     const brief = await request.post("/api/shortcuts", { headers: { Authorization: `Bearer ${key}` }, data: { text: "What's my day look like?" } });
     expect(await brief.text()).toContain("calendar");

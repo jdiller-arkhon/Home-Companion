@@ -10,7 +10,7 @@
 |---|---|---|
 | read | briefing, list records, weather, search documents | Runs automatically |
 | low | add a grocery/task/event, complete a chore, lights, scenes, lock a door | Runs automatically, audited |
-| confirm | any financial record, thermostat outside 60–80°F, closing a garage door, unknown device types | Person taps **Approve** |
+| confirm | thermostat outside 60–80°F, closing a garage door, unknown device types | Person taps **Approve** |
 | elevated | unlock a door, alarm panel, open garage/gate, delete records | Approve **plus** PIN or password |
 
 **Taint escalation:** once document text (or other untrusted content) has entered a turn, every write in that turn requires at least *confirm*. A malicious PDF saying "unlock the door" can never act silently. Untrusted text is also wrapped in delimiters and scanned for instruction-like phrases. Approvals expire after 15 minutes and can only be approved by the person whose conversation produced them.
@@ -24,7 +24,11 @@ The same rules apply in the regular UI: unlocking, opening the garage, deleting 
 * Vault files and extracted text: AES-256-GCM at rest under separate derived keys. Downloads are sent with `Content-Security-Policy: sandbox` and `no-store`.
 * Private records and documents are filtered in a single SQL predicate, and the e2e tests verify the other profile can't see them.
 * Audit log: every write, approval, denial, login, device command and export, with secrets redacted.
-* Hearth never stores bank passwords and never initiates payments. "Mark paid" only records an expense.
+
+## Tokens (calendar, Siri, sitter links)
+* Created only after PIN/password entry; the secret is shown once and stored as a SHA-256 hash.
+* Calendar feeds are read-only and include only what that person can see. Siri keys run low-risk commands; anything sensitive is queued for in-app approval. Sitter links show only the emergency card, expire in 1–30 days, and every view is audited.
+* Revoke any of them in Settings (or on the Emergency page) — effective immediately.
 
 ## Backups
 * Automatic: nightly at 3 AM using SQLite's online backup API plus the encrypted vault, keeping 14 (configurable). Stored in `data/backups/`.

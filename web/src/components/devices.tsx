@@ -55,12 +55,12 @@ function Tile({ d, run, busy }: { d: Device; run: (c: DeviceCommand) => void; bu
   const on = ["on", "open", "unlocked", "heat", "cool", "heat_cool", "playing"].includes(d.state);
   const Icon = d.domain === "lock" ? (d.state === "unlocked" ? LockOpen : Lock) : ICON[d.domain] ?? Power;
   const toggleable = ["light", "switch", "fan", "media_player"].includes(d.domain);
-  const tile = clsx("card rise flex min-h-[124px] flex-col p-4 text-left", on && d.domain === "light" && "ring-1 ring-warn/30");
+  const tile = clsx("card lift rise flex min-h-[124px] flex-col p-4 text-left transition-shadow duration-300", on && d.domain === "light" && "ring-1 ring-warn/30 shadow-[0_8px_30px_-12px_rgba(245,196,81,0.45)]");
 
   const body = (
     <>
       <div className="flex items-start">
-        <div className={clsx("grid size-9 place-items-center rounded-full", on ? "bg-fg text-bg" : "bg-fill text-fg-2")}><Icon size={17} strokeWidth={1.75} /></div>
+        <div className={clsx("grid size-9 place-items-center rounded-full transition-all duration-300", on ? "bg-fg text-bg scale-105" : "bg-fill text-fg-2")}><Icon size={17} strokeWidth={1.75} /></div>
         {d.available ? null : <WifiOff size={14} className="ml-auto text-bad" aria-label="Offline" />}
       </div>
       <div className="mt-auto pt-4">

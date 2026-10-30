@@ -7,8 +7,9 @@ export function Sheet({ open, onOpenChange, title, description, children }: { op
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/25 backdrop-blur-[2px] data-[state=open]:animate-[fade_200ms]" />
-        <Dialog.Content className="card fixed z-50 inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-b-none p-6 md:inset-auto md:left-1/2 md:top-1/2 md:w-[480px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[var(--radius)] rise">
+        <Dialog.Overlay data-sheet-overlay className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[3px]" />
+        <Dialog.Content data-sheet className="fixed z-50 inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[22px] border border-line bg-elev p-6 pb-[max(env(safe-area-inset-bottom),24px)] shadow-[0_-12px_48px_-16px_rgb(0_0_0/0.35)] md:inset-auto md:left-1/2 md:top-1/2 md:w-[480px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[20px] md:pb-6">
+          <div className="mx-auto -mt-2 mb-4 h-1 w-9 rounded-full bg-fill md:hidden" style={{ background: "var(--line-strong)" }} aria-hidden />
           <div className="flex items-start">
             <div>
               <Dialog.Title className="text-[18px] font-semibold tracking-tight">{title}</Dialog.Title>
